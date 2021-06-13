@@ -20,6 +20,7 @@ namespace Voice100Sharp
         const double VoicedDecibelThreshold = -30.0;
         const double ActivateThreshold = 0.7;
         const double DeactivateThreshold = 0.2;
+        const int MinRepeatVoicedCount = 10;
 
         InferenceSession _inferSess;
         AudioFeatureExtractor _featureExtractor;
@@ -34,7 +35,8 @@ namespace Voice100Sharp
         private double _unvoicedAverageDecibel;
         private double _voicedAverageDecibel;
         private int _zeroCrossing;
-        private double _voicedExpMovingAverage;
+
+        private int _voicedRepeatCount;
 
         private bool _isActive;
         private int _audioBufferActiveOffset;
@@ -49,7 +51,7 @@ namespace Voice100Sharp
             _audioLevelExpMovingAverage = 0.0;
             _unvoicedAverageDecibel = VoicedDecibelThreshold;
             _voicedAverageDecibel = VoicedDecibelThreshold;
-            _voicedExpMovingAverage = 0.0;
+            _voicedRepeatCount = 0;
             _audioBufferActiveOffset = 0;
         }
 
@@ -124,20 +126,9 @@ namespace Voice100Sharp
             while (_audioBufferVadOffset / VadWindowLength != audioBufferWriteOffset / VadWindowLength)
             {
                 double frameAudioLevel = FrameAudioLevel(audioBuffer, _audioBufferVadOffset, VadWindowLength);
-                _audioLevelExpMovingAverage = _audioLevelExpMovingAverage * 0.9 + frameAudioLevel * 0.1;
-                _audioBufferVadOffset += VadWindowLength;
-                if (_audioBufferVadOffset >= audioBuffer.Length)
-                {
-                    _audioBufferVadOffset = 0;
-                }
-
                 _zeroCrossing = FrameZeroCrossing(audioBuffer, _audioBufferVadOffset, VadWindowLength);
-
-                UpdateVoiced();
-                _voicedExpMovingAverage = _voicedExpMovingAverage * 0.95 + (IsVoiced ? 1 : 0) * 0.05;
-
+                UpdateVoiced(audioBuffer, frameAudioLevel);
                 UpdateActive(audioBuffer);
-
                 DebugInfo();
             }
         }
@@ -152,12 +143,19 @@ namespace Voice100Sharp
                 _voicedAverageDecibel,
                 _unvoicedAverageDecibel,
                 _zeroCrossing,
-                (int)(100 * _voicedExpMovingAverage));
+                _voicedRepeatCount);
             Console.WriteLine(text);
         }
 
-        private void UpdateVoiced()
+        private void UpdateVoiced(Span<short> audioBuffer, double frameAudioLevel)
         {
+            _audioLevelExpMovingAverage = _audioLevelExpMovingAverage * 0.9 + frameAudioLevel * 0.1;
+            _audioBufferVadOffset += VadWindowLength;
+            if (_audioBufferVadOffset >= audioBuffer.Length)
+            {
+                _audioBufferVadOffset = 0;
+            }
+
             double audioDecibel = AudioDecibel;
 
             _isVoiced = 2 * audioDecibel > _unvoicedAverageDecibel + _voicedAverageDecibel;
@@ -175,18 +173,22 @@ namespace Voice100Sharp
         {
             if (_isActive)
             {
-                if (_voicedExpMovingAverage <= DeactivateThreshold)
+                _voicedRepeatCount = IsVoiced ? 0 : _voicedRepeatCount + 1;
+                if (_voicedRepeatCount >= MinRepeatVoicedCount)
                 {
+                    _voicedRepeatCount = 0;
                     _isActive = false;
                     InvokeDeactivate(audioBuffer);
                 }
             }
             else
             {
-                if (_voicedExpMovingAverage >= ActivateThreshold)
+                _voicedRepeatCount = IsVoiced ? _voicedRepeatCount + 1 : 0;
+                if (_voicedRepeatCount >= MinRepeatVoicedCount)
                 {
+                    _voicedRepeatCount = 0;
                     _isActive = true;
-                    _audioBufferActiveOffset = _audioBufferVadOffset - VadWindowLength * 100;
+                    _audioBufferActiveOffset = _audioBufferVadOffset - 2 * MinRepeatVoicedCount * VadWindowLength;
                     while (_audioBufferActiveOffset < 0)
                     {
                         _audioBufferActiveOffset += audioBuffer.Length;
