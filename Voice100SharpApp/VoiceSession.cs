@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Voice100Sharp
 {
@@ -78,47 +79,6 @@ namespace Voice100Sharp
             int audioBufferWriteOffset = _audioBytesBufferWriteOffset / sizeof(short);
 
             UpdateAudioLevel(audioBuffer, audioBufferWriteOffset);
-#if false
-            while (audioBufferWriteIndex)
-            waveBuffer.
-            short[] waveBuffer = new short[e.BytesRecorded / 2];
-                Buffer.BlockCopy(e.Buffer, 0, waveBuffer, 0, e.BytesRecorded);
-                //var waveBuffer = new WaveBuffer(e.Buffer);
-                //waveBuffer.numberOfBytes = e.BytesRecorded;
-                for (int i = 0; i < waveBuffer.Length; i++)
-                {
-                    var sampleBuffer = new float[1 * 100 * 64];
-                    if (sampleIndex == sampleBuffer.Length)
-                    {
-                        var container = new List<NamedOnnxValue>();
-                        var input = new DenseTensor<float>(sampleBuffer, new int[3] { 1, 100, 64 });
-                        container.Add(NamedOnnxValue.CreateFromTensor<float>("audio", input));
-                        var res = sess.Run(container, new string[] { "logits:0" });
-                        foreach (var score in res)
-                        {
-                            var s = score.AsTensor<float>();
-                            float m = -10000.0f;
-                            int k = -1;
-                            for (int l = 0; l < s.Dimensions[0]; l++)
-                            {
-                                for (int j = 0; j < s.Dimensions[1]; j++)
-                                {
-                                    if (m < s[l, j])
-                                    {
-                                        k = j;
-                                        m = s[l, j];
-                                    }
-                                }
-                                Console.WriteLine(k);
-
-                            }
-                        }
-
-                        sampleIndex = 0;
-                    }
-                }
-            }
-#endif
         }
 
         private void UpdateAudioLevel(Span<short> audioBuffer, int audioBufferWriteOffset)
@@ -129,8 +89,8 @@ namespace Voice100Sharp
                 _zeroCrossing = FrameZeroCrossing(audioBuffer, _audioBufferVadOffset, VadWindowLength);
                 UpdateVoiced(audioBuffer, frameAudioLevel);
                 UpdateActive(audioBuffer);
-                DebugInfo();
             }
+            DebugInfo();
         }
 
         private void DebugInfo() 
@@ -234,7 +194,43 @@ namespace Voice100Sharp
                 _audioBufferActiveOffset += 160;
                 while (_audioBufferActiveOffset >= audioBuffer.Length) _audioBufferActiveOffset -= audioBuffer.Length;
             }
+
+            AnalyzeAudio(audio, melspec);
             OnDeactivated(audio, melspec);
+        }
+
+        private void AnalyzeAudio(short[] audio, float[] melspec)
+        {
+            const string vocab = " abcdefghijklmnopqrstuvwxyz'";
+            var container = new List<NamedOnnxValue>();
+            int[] melspecLength = new int[1] { melspec.Length };
+            var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
+            var audioLengthData = new DenseTensor<int>(melspecLength, new int[1] { 1 });
+            container.Add(NamedOnnxValue.CreateFromTensor<float>("audio", audioData));
+            container.Add(NamedOnnxValue.CreateFromTensor<int>("audio_len", audioLengthData));
+            var res = _inferSess.Run(container, new string[] { "logits" });
+            foreach (var score in res)
+            {
+                string pred = "";
+                var s = score.AsTensor<float>();
+                for (int l = 0; l < s.Dimensions[1]; l++)
+                {
+                    int k = -1;
+                    float m = -10000.0f;
+                    for (int j = 0; j < s.Dimensions[2]; j++)
+                    {
+                        if (m < s[0, l, j])
+                        {
+                            k = j;
+                            m = s[0, l, j];
+                        }
+                    }
+                    pred += vocab[k];
+                }
+                string pred2 = Regex.Replace(pred, @"(.)\1+", @"$1");
+                Console.WriteLine(pred);
+                Console.WriteLine(pred2);
+            }
         }
 
         private static double FrameAudioLevel(Span<short> audio, int offset, int length)
