@@ -90,7 +90,7 @@ namespace Voice100Sharp
                 UpdateVoiced(audioBuffer, frameAudioLevel);
                 UpdateActive(audioBuffer);
             }
-            DebugInfo();
+            //DebugInfo();
         }
 
         private void DebugInfo() 
@@ -133,9 +133,10 @@ namespace Voice100Sharp
         {
             if (_isActive)
             {
-                _voicedRepeatCount = IsVoiced ? 0 : _voicedRepeatCount + 1;
-                if (_voicedRepeatCount >= MinRepeatVoicedCount)
+                _voicedRepeatCount = IsVoiced ? 0 : (_voicedRepeatCount + 1);
+                if (_voicedRepeatCount >= MinRepeatVoicedCount * 3)
                 {
+                    Console.WriteLine("Deactive");
                     _voicedRepeatCount = 0;
                     _isActive = false;
                     InvokeDeactivate(audioBuffer);
@@ -143,9 +144,10 @@ namespace Voice100Sharp
             }
             else
             {
-                _voicedRepeatCount = IsVoiced ? _voicedRepeatCount + 1 : 0;
+                _voicedRepeatCount = IsVoiced ? (_voicedRepeatCount + 1) : 0;
                 if (_voicedRepeatCount >= MinRepeatVoicedCount)
                 {
+                    Console.WriteLine("Active");
                     _voicedRepeatCount = 0;
                     _isActive = true;
                     _audioBufferActiveOffset = _audioBufferVadOffset - 2 * MinRepeatVoicedCount * VadWindowLength;
@@ -185,8 +187,27 @@ namespace Voice100Sharp
             }
             double audioScale = 0.8 / audioMaxShortValue;
 
+            float[] audioFloat = new float[audio.Length];
+            int max = 0;
+            for (int i = 0; i < audioFloat.Length; i++)
+            {
+                audioFloat[i] = audio[i];
+                max = Math.Max(max, Math.Abs(audio[i]));
+            }
+            for (int i = 0; i < audioFloat.Length; i++)
+            {
+                audioFloat[i] = (float)(0.8 * audioFloat[i] / max);
+            }
+
             float[] melspec = new float[64 * ((audioLength - 400) / 160 + 1)];
             int melspecOffset = 0;
+#if true
+            for (int i = 0; i + 400 <= audioFloat.Length; i += 160)
+            {
+                _featureExtractor.MelSpectrogram(audioFloat, i, melspec, melspecOffset);
+                melspecOffset += 64;
+            }
+#else
             while ((_audioBufferActiveOffset + 400) % audioBuffer.Length <= _audioBufferDeactiveOffset)
             {
                 _featureExtractor.MelSpectrogram(audioBuffer, _audioBufferActiveOffset, audioScale, melspec, melspecOffset);
@@ -194,6 +215,7 @@ namespace Voice100Sharp
                 _audioBufferActiveOffset += 160;
                 while (_audioBufferActiveOffset >= audioBuffer.Length) _audioBufferActiveOffset -= audioBuffer.Length;
             }
+#endif
 
             AnalyzeAudio(audio, melspec);
             OnDeactivated(audio, melspec);
@@ -228,7 +250,7 @@ namespace Voice100Sharp
                     pred += vocab[k];
                 }
                 string pred2 = Regex.Replace(pred, @"(.)\1+", @"$1");
-                Console.WriteLine(pred);
+                //Console.WriteLine(pred);
                 Console.WriteLine(pred2);
             }
         }

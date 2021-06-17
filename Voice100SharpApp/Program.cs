@@ -16,7 +16,8 @@ namespace Voice100Sharp
         static void Main(string[] args)
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            _voiceSess = new VoiceSession(Path.Combine(appDirPath, "test.onnx"));
+            //_voiceSess = new VoiceSession(Path.Combine(appDirPath, "stt_en_conv_base_ctc-20210617.onnx"));
+            _voiceSess = new VoiceSession(Path.Combine(appDirPath, "stt_en_quartznet5x3_ctc-20210616.onnx"));
             _voiceSess.OnDeactivated += OnDeactivated;
 
             for (int i = 0; i < WaveIn.DeviceCount; i++)
@@ -45,13 +46,13 @@ namespace Voice100Sharp
                 writer.WriteSamples(audio, 0, audio.Length);
             }
 
-            using (var o = File.OpenWrite($"vid-{vid}.raw"))
+            using (var o = new FileStream($"vid-{vid}.raw", FileMode.Create, FileAccess.Write))
             {
                 var m = MemoryMarshal.Cast<short, byte>(audio).ToArray();
                 o.Write(m, 0, m.Length);
             }
 
-            using (var o = File.OpenWrite($"vid-{vid}.bin"))
+            using (var o = new FileStream($"vid-{vid}.bin", FileMode.Create, FileAccess.Write))
             {
                 var m = MemoryMarshal.Cast<float, byte>(melspec).ToArray();
                 o.Write(m, 0, m.Length);

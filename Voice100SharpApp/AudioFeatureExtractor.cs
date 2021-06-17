@@ -17,7 +17,7 @@ namespace Voice100Sharp
             int sampleRate = 16000,
             int stftWindowLength = 400, int stftLength = 512,
             int nMelBands = 64, double melMinHz = 0.0, double melMaxHz = 0.0,
-            double logOffset = 1e-15)
+            double logOffset = 1e-6)
         {
             if (melMaxHz == 0.0)
             {
