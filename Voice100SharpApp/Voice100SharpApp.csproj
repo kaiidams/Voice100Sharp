@@ -257,6 +257,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="runtimes\win-x64\native\voice100_native.dll">
+      <Link>voice100_native.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Voice100Sharp\Voice100Sharp.csproj">
+      <Project>{c96c3d9c-66b4-460d-8116-3b04fe6e479a}</Project>
+      <Name>Voice100Sharp</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.ML.OnnxRuntime.Managed.1.8.0\build\netstandard1.1\Microsoft.ML.OnnxRuntime.Managed.targets" Condition="Exists('..\packages\Microsoft.ML.OnnxRuntime.Managed.1.8.0\build\netstandard1.1\Microsoft.ML.OnnxRuntime.Managed.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
