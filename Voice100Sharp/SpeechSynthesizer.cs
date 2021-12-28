@@ -59,15 +59,17 @@ namespace Voice100Sharp
             var container = new List<NamedOnnxValue>();
             var encodedData = new DenseTensor<long>(encoded, new int[2] { 1, encoded.Length });
             container.Add(NamedOnnxValue.CreateFromTensor("text", encodedData));
-            using var res = _ttsAlignInferSess.Run(container, new string[] { "align" });
-            var logAlign = res.First().AsTensor<float>();
-            var align = new double[logAlign.Dimensions[1], 2];
-            for (int i = 0; i < align.GetLength(0); i++)
+            using (var res = _ttsAlignInferSess.Run(container, new string[] { "align" }))
             {
-                align[i, 0] = Math.Exp(Math.Max(0, logAlign[0, i, 0])) - 1;
-                align[i, 1] = Math.Exp(Math.Max(0, logAlign[0, i, 1])) - 1;
+                var logAlign = res.First().AsTensor<float>();
+                var align = new double[logAlign.Dimensions[1], 2];
+                for (int i = 0; i < align.GetLength(0); i++)
+                {
+                    align[i, 0] = Math.Exp(Math.Max(0, logAlign[0, i, 0])) - 1;
+                    align[i, 1] = Math.Exp(Math.Max(0, logAlign[0, i, 1])) - 1;
+                }
+                return MakeAlignText(encoded, align);
             }
-            return MakeAlignText(encoded, align);
         }
 
         private long[] MakeAlignText(long[] encoded, double[,] align, int head = 5, int tail = 5)
@@ -100,12 +102,14 @@ namespace Voice100Sharp
             var container = new List<NamedOnnxValue>();
             var alignedData = new DenseTensor<long>(aligned, new int[2] { 1, aligned.Length });
             container.Add(NamedOnnxValue.CreateFromTensor("aligntext", alignedData));
-            using var output = _ttsAudioInferSess.Run(container, new string[] { "f0", "logspc", "codeap" });
-            var outputArray = output.ToArray();
-            float[] f0 = outputArray[0].AsTensor<float>().ToArray();
-            float[] logspc = outputArray[1].AsTensor<float>().ToArray();
-            float[] codeap = outputArray[2].AsTensor<float>().ToArray();
-            return _vocoder.Decode(f0, logspc, codeap);
+            using (var output = _ttsAudioInferSess.Run(container, new string[] { "f0", "logspc", "codeap" }))
+            {
+                var outputArray = output.ToArray();
+                float[] f0 = outputArray[0].AsTensor<float>().ToArray();
+                float[] logspc = outputArray[1].AsTensor<float>().ToArray();
+                float[] codeap = outputArray[2].AsTensor<float>().ToArray();
+                return _vocoder.Decode(f0, logspc, codeap);
+            }
         }
     }
 }

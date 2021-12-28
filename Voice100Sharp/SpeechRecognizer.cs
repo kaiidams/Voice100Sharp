@@ -254,30 +254,32 @@ namespace Voice100Sharp
             int[] melspecLength = new int[1] { melspec.Length };
             var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
             container.Add(NamedOnnxValue.CreateFromTensor("audio", audioData));
-            using var res = _inferSess.Run(container, new string[] { "logits" });
-            foreach (var score in res)
+            using (var res = _inferSess.Run(container, new string[] { "logits" }))
             {
-                var s = score.AsTensor<float>();
-                long[] pred = new long[s.Dimensions[1]];
-                for (int l = 0; l < pred.Length; l++)
+                foreach (var score in res)
                 {
-                    int k = -1;
-                    float m = -10000.0f;
-                    for (int j = 0; j < s.Dimensions[2]; j++)
+                    var s = score.AsTensor<float>();
+                    long[] pred = new long[s.Dimensions[1]];
+                    for (int l = 0; l < pred.Length; l++)
                     {
-                        if (m < s[0, l, j])
+                        int k = -1;
+                        float m = -10000.0f;
+                        for (int j = 0; j < s.Dimensions[2]; j++)
                         {
-                            k = j;
-                            m = s[0, l, j];
+                            if (m < s[0, l, j])
+                            {
+                                k = j;
+                                m = s[0, l, j];
+                            }
                         }
+                        pred[l] = k;
                     }
-                    pred[l] = k;
+
+                    string text = _encoder.Decode(pred);
+                    text = _encoder.MergeRepeated(text);
+
+                    OnSpeechRecognition(audio, melspec, text);
                 }
-
-                string text = _encoder.Decode(pred);
-                text = _encoder.MergeRepeated(text);
-
-                OnSpeechRecognition(audio, melspec, text);
             }
         }
 
