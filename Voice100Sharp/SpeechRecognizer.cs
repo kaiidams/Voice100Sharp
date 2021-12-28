@@ -126,7 +126,10 @@ namespace Voice100Sharp
                 _unvoicedAverageDecibel,
                 _zeroCrossing,
                 _voicedRepeatCount);
-            OnDebugInfo(text);
+            if (OnDebugInfo != null)
+            {
+                OnDebugInfo(text);
+            }
         }
 
         private void UpdateVoiced(Span<short> audioBuffer, double frameAudioLevel)

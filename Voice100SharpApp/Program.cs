@@ -10,15 +10,15 @@ namespace Voice100Sharp
 {
     class Program
     {
-        static VoiceSession _voiceSess;
+        static SpeechRecognizer _speechRecognizer;
         static int vid = 0;
 
         static void Main(string[] args)
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            //_voiceSess = new VoiceSession(Path.Combine(appDirPath, "stt_en_conv_base_ctc-20210617.onnx"));
-            _voiceSess = new VoiceSession(Path.Combine(appDirPath, "stt_en_quartznet5x3_ctc-20210616.onnx"));
-            _voiceSess.OnDeactivated += OnDeactivated;
+            string modelPath = Path.Combine(appDirPath, "Assets", "stt_en_conv_base_ctc-20211125.onnx");
+            _speechRecognizer = new SpeechRecognizer(modelPath);
+            _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
 
             for (int i = 0; i < WaveIn.DeviceCount; i++)
             {
@@ -38,7 +38,7 @@ namespace Voice100Sharp
             waveIn.StopRecording();
         }
 
-        private static void OnDeactivated(short[] audio, float[] melspec)
+        private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
         {
             string outputFilePath = $"vid-{vid}.wav";
             using (var writer = new WaveFileWriter(outputFilePath, new WaveFormat(16000, 16, 1)))
@@ -58,6 +58,8 @@ namespace Voice100Sharp
                 o.Write(m, 0, m.Length);
             }
 
+            Console.WriteLine("Recognized: {0}", text);
+
             vid++;
         }
 
@@ -68,7 +70,7 @@ namespace Voice100Sharp
 
         private static void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            _voiceSess.AddAudioBytes(e.Buffer, e.BytesRecorded);
+            _speechRecognizer.AddAudioBytes(e.Buffer, e.BytesRecorded);
         }
     }
 }

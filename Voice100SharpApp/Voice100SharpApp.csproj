@@ -242,13 +242,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AudioFeatureExtractor.cs" />
-    <Compile Include="VoiceSession.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Assets\stt_en_conv_base_ctc-20211125.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\ttsalign_en_conv_base-20210808.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Assets\ttsaudio_en_conv_base-20210811.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="stt_en_conv_base_ctc-20210617.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
