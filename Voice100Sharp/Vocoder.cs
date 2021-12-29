@@ -5,8 +5,9 @@ namespace Voice100Sharp
     internal class Vocoder
     {
 #if true
-        const string DllName = "libvoice100_native.so";
-#else
+        const string DllName = "voice100_native";
+#endif
+#if false
         const string DllName = "__Internal";
 #endif
         public const int FFTSize = 512;

@@ -11,15 +11,79 @@ namespace Voice100Sharp
     class Program
     {
         static SpeechRecognizer _speechRecognizer;
-        static int vid = 0;
+        static SpeechSynthesizer _speechSynthesizer;
+        static int voiceId = 0;
+        static BufferedWaveProvider bufferedWaveProvider;
+        static byte[] waveData;
+        static int waveIndex;
+        static WaveOut waveOut;
 
         static void Main(string[] args)
+        {
+            CreateSpeechRecognizer();
+            CreateSpeechSynthesizer();
+
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
+            {
+                var cap = WaveOut.GetCapabilities(i);
+                Console.WriteLine(cap.ProductName);
+            }
+
+            waveData = _speechSynthesizer.Speak("Hello, I am a rocket.");
+            waveOut = new WaveOut();
+            bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
+            waveOut.Init(bufferedWaveProvider);
+            waveOut.PlaybackStopped += OnPlaybackStopped;
+            waveOut.Play();
+            waveIndex = 0;
+            AddSample();
+            var waveIn = CreateWaveIn();
+            waveIn.StartRecording();
+            Console.ReadLine();
+            waveIn.StopRecording();
+        }
+
+        static void AddSample()
+        {
+            //Console.WriteLine("{0}/{1}", bufferedWaveProvider.BufferedBytes, bufferedWaveProvider.BufferLength);
+            int len = Math.Min(waveData.Length - waveIndex, bufferedWaveProvider.BufferLength - bufferedWaveProvider.BufferedBytes);
+            if (len > 0)
+            {
+                bufferedWaveProvider.AddSamples(waveData, waveIndex, len);
+                waveIndex += len;
+            }
+        }
+
+        private static void OnPlaybackStopped(object sender, StoppedEventArgs e)
+        {
+            if (waveIndex >= waveData.Length)
+            {
+                waveOut.Stop();
+            }
+            else
+            {
+                AddSample();
+            }
+        }
+
+        private static void CreateSpeechRecognizer()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string modelPath = Path.Combine(appDirPath, "Assets", "stt_en_conv_base_ctc-20211125.onnx");
             _speechRecognizer = new SpeechRecognizer(modelPath);
             _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
+        }
 
+        private static void CreateSpeechSynthesizer()
+        {
+            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
+            string alignModelPath = Path.Combine(appDirPath, "Assets", "ttsalign_en_conv_base-20210808.onnx");
+            string audioModelPath = Path.Combine(appDirPath, "Assets", "ttsaudio_en_conv_base-20210811.onnx");
+            _speechSynthesizer = new SpeechSynthesizer(alignModelPath, audioModelPath);
+        }
+
+        private static IWaveIn CreateWaveIn()
+        {
             for (int i = 0; i < WaveIn.DeviceCount; i++)
             {
                 var cap = WaveIn.GetCapabilities(i);
@@ -33,26 +97,24 @@ namespace Voice100Sharp
             waveIn.DataAvailable += OnDataAvailable;
             waveIn.RecordingStopped += OnRecordingStopped;
 
-            waveIn.StartRecording();
-            Console.ReadLine();
-            waveIn.StopRecording();
+            return waveIn;
         }
 
         private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
         {
-            string outputFilePath = $"vid-{vid}.wav";
+            string outputFilePath = $"vid-{voiceId}.wav";
             using (var writer = new WaveFileWriter(outputFilePath, new WaveFormat(16000, 16, 1)))
             {
                 writer.WriteSamples(audio, 0, audio.Length);
             }
 
-            using (var o = new FileStream($"vid-{vid}.raw", FileMode.Create, FileAccess.Write))
+            using (var o = new FileStream($"vid-{voiceId}.raw", FileMode.Create, FileAccess.Write))
             {
                 var m = MemoryMarshal.Cast<short, byte>(audio).ToArray();
                 o.Write(m, 0, m.Length);
             }
 
-            using (var o = new FileStream($"vid-{vid}.bin", FileMode.Create, FileAccess.Write))
+            using (var o = new FileStream($"vid-{voiceId}.bin", FileMode.Create, FileAccess.Write))
             {
                 var m = MemoryMarshal.Cast<float, byte>(melspec).ToArray();
                 o.Write(m, 0, m.Length);
@@ -60,7 +122,7 @@ namespace Voice100Sharp
 
             Console.WriteLine("Recognized: {0}", text);
 
-            vid++;
+            voiceId++;
         }
 
         private static void OnRecordingStopped(object sender, StoppedEventArgs e)
