@@ -29,7 +29,8 @@ namespace Voice100Sharp
                 Console.WriteLine(cap.ProductName);
             }
 
-            waveData = _speechSynthesizer.Speak("Hello, I am a rocket.");
+            string alignedText;
+            _speechSynthesizer.Speak("Hello, I am a rocket.", out waveData, out alignedText);
             waveOut = new WaveOut();
             bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
             waveOut.Init(bufferedWaveProvider);

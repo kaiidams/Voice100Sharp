@@ -55,11 +55,41 @@ namespace Voice100Sharp
 
         public byte[] Speak(string text)
         {
+            short[] audio;
+            long[] aligned;
+            Speak(text, out audio, out aligned);
+            return MemoryMarshal.Cast<short, byte>(audio).ToArray();
+        }
+
+        public void Speak(string text, out short[] audio, out string alignedText)
+        {
+            long[] aligned;
+            Speak(text, out audio, out aligned);
+            alignedText = _encoder.Decode(aligned);
+        }
+
+        public void Speak(string text, out byte[] audio, out string alignedText)
+        {
+            short[] shortAudio;
+            long[] aligned;
+            Speak(text, out shortAudio, out aligned);
+            audio = MemoryMarshal.Cast<short, byte>(shortAudio).ToArray();
+            alignedText = _encoder.Decode(aligned);
+        }
+
+        private void Speak(string text, out short[] audio, out long[] aligned)
+        {
             long[] encoded = _encoder.Encode(text);
-            if (encoded.Length == 0) return new byte[0];
-            long[] aligned = Align(encoded);
-            var y = Predict(aligned);
-            return MemoryMarshal.Cast<short, byte>(y).ToArray();
+            if (encoded.Length == 0)
+            {
+                audio = new short[0];
+                aligned = new long[0];
+            }
+            else
+            {
+                aligned = Align(encoded);
+                audio = Predict(aligned);
+            }
         }
 
         private long[] Align(long[] encoded)
