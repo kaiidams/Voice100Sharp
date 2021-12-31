@@ -4,10 +4,10 @@ namespace Voice100Sharp
 {
     class AudioFeatureExtractor
     {
-        private double[] window;
-        private double[] melBands;
-        private double[] temp1;
-        private double[] temp2;
+        private double[] _window;
+        private double[] _melBands;
+        private double[] _temp1;
+        private double[] _temp2;
         private int _fftLength;
         private int _nMelBands;
         private double _sampleRate;
@@ -24,10 +24,10 @@ namespace Voice100Sharp
                 melMaxHz = sampleRate / 2;
             }
             _sampleRate = sampleRate;
-            window = MakeHannWindow(stftWindowLength);
-            melBands = MakeMelBands(melMinHz, melMaxHz, nMelBands);
-            temp1 = new double[stftLength];
-            temp2 = new double[stftLength];
+            _window = MakeHannWindow(stftWindowLength);
+            _melBands = MakeMelBands(melMinHz, melMaxHz, nMelBands);
+            _temp1 = new double[stftLength];
+            _temp2 = new double[stftLength];
             _fftLength = stftLength;
             _nMelBands = nMelBands;
             _logOffset = logOffset;
@@ -45,40 +45,40 @@ namespace Voice100Sharp
 
         public void Spectrogram(float[] waveform, int waveformOffset, float[] spec, int specOffset)
         {
-            GetFrame(waveform, waveformOffset, temp1);
-            CFFT(temp1, temp2, _fftLength);
-            ToMagnitude(temp2, temp1, _fftLength);
+            GetFrame(waveform, waveformOffset, _temp1);
+            CFFT(_temp1, _temp2, _fftLength);
+            ToMagnitude(_temp2, _temp1, _fftLength);
             int specLength = _fftLength / 2 + 1;
             for (int i = 0; i < specLength; i++)
             {
-                float value = (float)(20.0 * Math.Log(temp2[i] + _logOffset));
+                float value = (float)(20.0 * Math.Log(_temp2[i] + _logOffset));
                 spec[specOffset + i] = value;
             }
         }
 
         public void MelSpectrogram(float[] waveform, int waveformOffset, float[] melspec, int melspecOffset)
         {
-            GetFrame(waveform, waveformOffset, temp1);
-            CFFT(temp1, temp2, _fftLength);
-            ToSquareMagnitude(temp2, temp1, _fftLength);
-            ToMelSpec(temp2, melspec, melspecOffset);
+            GetFrame(waveform, waveformOffset, _temp1);
+            CFFT(_temp1, _temp2, _fftLength);
+            ToSquareMagnitude(_temp2, _temp1, _fftLength);
+            ToMelSpec(_temp2, melspec, melspecOffset);
         }
 
         public void MelSpectrogram(Span<short> waveform, int waveformOffset, double scale, float[] melspec, int melspecOffset)
         {
-            GetFrame(waveform, waveformOffset, scale, temp1);
-            CFFT(temp1, temp2, _fftLength);
-            ToSquareMagnitude(temp2, temp1, _fftLength);
-            ToMelSpec(temp2, melspec, melspecOffset);
+            GetFrame(waveform, waveformOffset, scale, _temp1);
+            CFFT(_temp1, _temp2, _fftLength);
+            ToSquareMagnitude(_temp2, _temp1, _fftLength);
+            ToMelSpec(_temp2, melspec, melspecOffset);
         }
 
         private void ToMelSpec(double[] spec, float[] melspec, int melspecOffset)
         {
             for (int i = 0; i < _nMelBands; i++)
             {
-                double startHz = melBands[i];
-                double peakHz = melBands[i + 1];
-                double endHz = melBands[i + 2];
+                double startHz = _melBands[i];
+                double peakHz = _melBands[i + 1];
+                double endHz = _melBands[i + 2];
                 double v = 0.0;
                 int j = (int)(startHz * _fftLength / _sampleRate) + 1;
                 while (true)
@@ -105,11 +105,11 @@ namespace Voice100Sharp
 
         void GetFrame(float[] waveform, int start, double[] frame)
         {
-            for (int i = 0; i < window.Length; i++)
+            for (int i = 0; i < _window.Length; i++)
             {
-                frame[i] = waveform[start + i] * window[i];
+                frame[i] = waveform[start + i] * _window[i];
             }
-            for (int i = window.Length; i < frame.Length; i++)
+            for (int i = _window.Length; i < frame.Length; i++)
             {
                 frame[i] = 0.0;
             }
@@ -118,12 +118,12 @@ namespace Voice100Sharp
         public void GetFrame(Span<short> waveform, int start, double scale, double[] frame)
         {
             int offset = start;
-            for (int i = 0; i < window.Length; i++)
+            for (int i = 0; i < _window.Length; i++)
             {
-                frame[i] = waveform[offset++] * window[i] * scale;
+                frame[i] = waveform[offset++] * _window[i] * scale;
                 if (offset >= waveform.Length) offset = 0;
             }
-            for (int i = window.Length; i < frame.Length; i++)
+            for (int i = _window.Length; i < frame.Length; i++)
             {
                 frame[i] = 0.0;
             }
