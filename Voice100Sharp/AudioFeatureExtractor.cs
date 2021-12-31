@@ -14,14 +14,14 @@ namespace Voice100Sharp
             return window;
         }
 
-        private double[] _window;
-        private double[] _melBands;
-        private double[] _temp1;
-        private double[] _temp2;
-        private int _fftLength;
-        private int _nMelBands;
-        private double _sampleRate;
-        private double _logOffset;
+        private readonly double[] _window;
+        private readonly double[] _melBands;
+        private readonly double[] _temp1;
+        private readonly double[] _temp2;
+        private readonly int _fftLength;
+        private readonly int _nMelBands;
+        private readonly double _sampleRate;
+        private readonly double _logOffset;
 
         public AudioFeatureExtractor(
             int sampleRate = 16000,
