@@ -4,6 +4,16 @@ namespace Voice100Sharp
 {
     class AudioFeatureExtractor
     {
+        private static double[] MakeHannWindow(int windowLength)
+        {
+            double[] window = new double[windowLength];
+            for (int i = 0; i < windowLength; i++)
+            {
+                window[i] = 0.5 * (1 - Math.Cos(2 * Math.PI * i / windowLength));
+            }
+            return window;
+        }
+
         private double[] _window;
         private double[] _melBands;
         private double[] _temp1;
@@ -31,16 +41,6 @@ namespace Voice100Sharp
             _fftLength = stftLength;
             _nMelBands = nMelBands;
             _logOffset = logOffset;
-        }
-
-        static double[] MakeHannWindow(int windowLength)
-        {
-            double[] window = new double[windowLength];
-            for (int i = 0; i < windowLength; i++)
-            {
-                window[i] = 0.5 * (1 - Math.Cos(2 * Math.PI * i / windowLength));
-            }
-            return window;
         }
 
         public void Spectrogram(float[] waveform, int waveformOffset, float[] spec, int specOffset)
