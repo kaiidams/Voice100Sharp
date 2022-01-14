@@ -70,7 +70,7 @@ namespace Voice100Sharp
         private static void CreateSpeechRecognizer()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string modelPath = Path.Combine(appDirPath, "Assets", "stt_en_conv_base_ctc-20211125.onnx");
+            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220109.all.ort");
             _speechRecognizer = new SpeechRecognizer(modelPath);
             _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
         }
@@ -78,8 +78,8 @@ namespace Voice100Sharp
         private static void CreateSpeechSynthesizer()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string alignModelPath = Path.Combine(appDirPath, "Assets", "ttsalign_en_conv_base-20210808.onnx");
-            string audioModelPath = Path.Combine(appDirPath, "Assets", "ttsaudio_en_conv_base-20210811.onnx");
+            string alignModelPath = Path.Combine(appDirPath, "Assets", "ttsalign_en_conv_base-20210808.all.ort");
+            string audioModelPath = Path.Combine(appDirPath, "Assets", "ttsaudio_en_conv_base-20220107.all.ort");
             _speechSynthesizer = new SpeechSynthesizer(alignModelPath, audioModelPath);
         }
 
