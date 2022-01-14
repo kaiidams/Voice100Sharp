@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{C96C3D9C-66B4-460D-8116-3B04FE6E479A}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Voice100Sharp</RootNamespace>
-    <AssemblyName>Voice100Sharp</AssemblyName>
+    <RootNamespace>Voice100</RootNamespace>
+    <AssemblyName>Voice100</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -7,8 +7,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{74B49B7B-975F-4815-A0F3-7BC5CD05E877}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>Voice100Sharp</RootNamespace>
-    <AssemblyName>Voice100SharpApp</AssemblyName>
+    <RootNamespace>Voice100</RootNamespace>
+    <AssemblyName>Voice100App</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -265,9 +265,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Voice100Sharp\Voice100Sharp.csproj">
+    <ProjectReference Include="..\Voice100\Voice100.csproj">
       <Project>{c96c3d9c-66b4-460d-8116-3b04fe6e479a}</Project>
-      <Name>Voice100Sharp</Name>
+      <Name>Voice100</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
