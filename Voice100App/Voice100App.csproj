@@ -263,6 +263,10 @@
       <Link>voice100_native.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="runtimes\win-x64\native\webrtc_vad.dll">
+      <Link>webrtc_vad.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Voice100\Voice100.csproj">
