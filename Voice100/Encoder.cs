@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     internal class Encoder
     {

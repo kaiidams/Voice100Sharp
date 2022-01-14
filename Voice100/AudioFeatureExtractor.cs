@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     class AudioFeatureExtractor
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     internal class WebRtcVad : IDisposable
     {

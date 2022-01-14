@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     class AudioFeatureBuffer
     {

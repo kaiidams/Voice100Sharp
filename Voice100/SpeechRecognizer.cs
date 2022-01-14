@@ -7,7 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     public class SpeechRecognizer : IDisposable
     {

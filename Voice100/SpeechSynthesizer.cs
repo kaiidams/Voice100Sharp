@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Voice100Sharp
+namespace Voice100
 {
     public class SpeechSynthesizer : IDisposable
     {

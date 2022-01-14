@@ -5,8 +5,9 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using Voice100;
 
-namespace Voice100Sharp
+namespace Voice100App
 {
     class Program
     {
