@@ -71,6 +71,7 @@
     <Compile Include="SpeechRecognizer.cs" />
     <Compile Include="SpeechSynthesizer.cs" />
     <Compile Include="Vocoder.cs" />
+    <Compile Include="WebRtcVad.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
