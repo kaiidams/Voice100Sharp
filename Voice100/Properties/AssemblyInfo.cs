@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Katsuya Iida")]
-[assembly: AssemblyProduct("Voice100Sharp")]
+[assembly: AssemblyProduct("Voice100")]
 [assembly: AssemblyCopyright("Copyright © Katsuya Iida 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
