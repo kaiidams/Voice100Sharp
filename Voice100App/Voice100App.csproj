@@ -270,7 +270,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Voice100\Voice100.csproj">
-      <Project>{c96c3d9c-66b4-460d-8116-3b04fe6e479a}</Project>
+      <Project>{9ff29837-8452-4860-a66c-4c1feb41e37c}</Project>
       <Name>Voice100</Name>
     </ProjectReference>
   </ItemGroup>
