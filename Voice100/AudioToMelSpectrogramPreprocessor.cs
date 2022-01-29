@@ -25,6 +25,7 @@ namespace Voice100
 
         public AudioToMelSpectrogramPreprocessor(
             int sampleRate = 16000,
+            string window = "hann",
             double windowSize = 0.02,
             double windowStride = 0.01,
             int stftLength = 512,
@@ -39,7 +40,7 @@ namespace Voice100
             _sampleRate = sampleRate;
             _winLength = (int)(sampleRate * windowSize); // 320
             _hopWidth = (int)(sampleRate * windowStride); // 160
-            _window = Window.MakeHannWindow(_winLength);
+            _window = Window.MakeWindow(window, _winLength);
             _melBands = MelBands.MakeMelBands(melMinHz, melMaxHz, nMelBands, htk);
             _temp1 = new double[stftLength];
             _temp2 = new double[stftLength];
@@ -68,7 +69,7 @@ namespace Voice100
             short[] waveform, int waveformPos, 
             float[] melspec, int melspecOffset, int melspecStride)
         {
-            GetFrame(waveform, waveformPos, InvShortMaxValue, _temp1);
+            ReadFrame(waveform, waveformPos, InvShortMaxValue, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToSquareMagnitude(_temp2, _temp1, _fftLength);
             ToMelSpec(_temp2, melspec, melspecOffset, melspecStride);
@@ -135,10 +136,10 @@ namespace Voice100
             }
         }
 
-        private void GetFrame(short[] waveform, int waveformPos, double scale, double[] frame)
+        private void ReadFrame(short[] waveform, int offset, double scale, double[] frame)
         {
             int winOffset = (_winLength - _fftLength) / 2;
-            int waveformOffset = waveformPos - _fftLength / 2;
+            int waveformOffset = offset - _fftLength / 2;
             for (int i = 0; i < _fftLength; i++)
             {
                 int j = i + winOffset;
@@ -154,14 +155,6 @@ namespace Voice100
                 {
                     frame[i] = 0;
                 }
-            }
-        }
-
-        static void ToSquareMagnitude(double[] xr, double[] xi, int N)
-        {
-            for (int n = 0; n < N; n++)
-            {
-                xr[n] = xr[n] * xr[n] + xi[n] * xi[n];
             }
         }
     }

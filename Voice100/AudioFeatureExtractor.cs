@@ -15,6 +15,7 @@ namespace Voice100
 
         public AudioFeatureExtractor(
             int sampleRate = 16000,
+            string window = "hann",
             int stftWindowLength = 400, int stftLength = 512,
             int nMelBands = 64, double melMinHz = 0.0, double melMaxHz = 0.0,
             bool htk = true,
@@ -25,7 +26,7 @@ namespace Voice100
                 melMaxHz = sampleRate / 2;
             }
             _sampleRate = sampleRate;
-            _window = Window.MakeHannWindow(stftWindowLength);
+            _window = Window.MakeWindow(window, stftWindowLength);
             _melBands = MelBands.MakeMelBands(melMinHz, melMaxHz, nMelBands, htk);
             _temp1 = new double[stftLength];
             _temp2 = new double[stftLength];
@@ -36,7 +37,7 @@ namespace Voice100
 
         public void Spectrogram(float[] waveform, int waveformOffset, float[] spec, int specOffset)
         {
-            GetFrame(waveform, waveformOffset, _temp1);
+            ReadFrame(waveform, waveformOffset, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToMagnitude(_temp2, _temp1, _fftLength);
             int specLength = _fftLength / 2 + 1;
@@ -49,15 +50,15 @@ namespace Voice100
 
         public void MelSpectrogram(float[] waveform, int waveformOffset, float[] melspec, int melspecOffset)
         {
-            GetFrame(waveform, waveformOffset, _temp1);
+            ReadFrame(waveform, waveformOffset, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToSquareMagnitude(_temp2, _temp1, _fftLength);
             ToMelSpec(_temp2, melspec, melspecOffset);
         }
 
-        public void MelSpectrogram(Span<short> waveform, int waveformOffset, double scale, float[] melspec, int melspecOffset)
+        public void MelSpectrogram(short[] waveform, int waveformOffset, double scale, float[] melspec, int melspecOffset)
         {
-            GetFrame(waveform, waveformOffset, scale, _temp1);
+            ReadFrame(waveform, waveformOffset, scale, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToSquareMagnitude(_temp2, _temp1, _fftLength);
             ToMelSpec(_temp2, melspec, melspecOffset);
@@ -94,11 +95,11 @@ namespace Voice100
             }
         }
 
-        void GetFrame(float[] waveform, int start, double[] frame)
+        private void ReadFrame(float[] waveform, int offset, double[] frame)
         {
             for (int i = 0; i < _window.Length; i++)
             {
-                frame[i] = waveform[start + i] * _window[i];
+                frame[i] = waveform[offset + i] * _window[i];
             }
             for (int i = _window.Length; i < frame.Length; i++)
             {
@@ -106,13 +107,11 @@ namespace Voice100
             }
         }
 
-        public void GetFrame(Span<short> waveform, int start, double scale, double[] frame)
+        private void ReadFrame(short[] waveform, int offset, double scale, double[] frame)
         {
-            int offset = start;
             for (int i = 0; i < _window.Length; i++)
             {
-                frame[i] = waveform[offset++] * _window[i] * scale;
-                if (offset >= waveform.Length) offset = 0;
+                frame[i] = waveform[offset + i] * _window[i] * scale;
             }
             for (int i = _window.Length; i < frame.Length; i++)
             {
@@ -120,19 +119,19 @@ namespace Voice100
             }
         }
 
-        static void ToMagnitude(double[] xr, double[] xi, int N)
+        static void ToMagnitude(double[] xr, double[] xi, int length)
         {
-            for (int n = 0; n < N; n++)
+            for (int i = 0; i < length; i++)
             {
-                xr[n] = Math.Sqrt(xr[n] * xr[n] + xi[n] * xi[n]);
+                xr[i] = Math.Sqrt(xr[i] * xr[i] + xi[i] * xi[i]);
             }
         }
 
-        static void ToSquareMagnitude(double[] xr, double[] xi, int N)
+        protected static void ToSquareMagnitude(double[] xr, double[] xi, int length)
         {
-            for (int n = 0; n < N; n++)
+            for (int i = 0; i < length; i++)
             {
-                xr[n] = xr[n] * xr[n] + xi[n] * xi[n];
+                xr[i] = xr[i] * xr[i] + xi[i] * xi[i];
             }
         }
     }
