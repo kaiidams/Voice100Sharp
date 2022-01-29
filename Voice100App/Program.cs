@@ -71,7 +71,7 @@ namespace Voice100App
         private static void CreateSpeechRecognizer()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220109.all.ort");
+            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
             _speechRecognizer = new SpeechRecognizer(modelPath);
             _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
         }
