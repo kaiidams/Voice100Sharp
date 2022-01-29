@@ -11,7 +11,7 @@ namespace Voice100App
 {
     class Program
     {
-        static SpeechRecognizer _speechRecognizer;
+        static SpeechRecognizerSession _speechRecognizer;
         static SpeechSynthesizer _speechSynthesizer;
         static int voiceId = 0;
         static BufferedWaveProvider bufferedWaveProvider;
@@ -72,7 +72,7 @@ namespace Voice100App
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
-            _speechRecognizer = new SpeechRecognizer(modelPath);
+            _speechRecognizer = new SpeechRecognizerSession(modelPath);
             _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
         }
 
