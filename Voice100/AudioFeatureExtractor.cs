@@ -17,6 +17,7 @@ namespace Voice100
             int sampleRate = 16000,
             int stftWindowLength = 400, int stftLength = 512,
             int nMelBands = 64, double melMinHz = 0.0, double melMaxHz = 0.0,
+            bool htk = true,
             double logOffset = 1e-6)
         {
             if (melMaxHz == 0.0)
@@ -25,7 +26,7 @@ namespace Voice100
             }
             _sampleRate = sampleRate;
             _window = Window.MakeHannWindow(stftWindowLength);
-            _melBands = MakeMelBands(melMinHz, melMaxHz, nMelBands);
+            _melBands = MelBands.MakeMelBands(melMinHz, melMaxHz, nMelBands, htk);
             _temp1 = new double[stftLength];
             _temp2 = new double[stftLength];
             _fftLength = stftLength;
@@ -133,29 +134,6 @@ namespace Voice100
             {
                 xr[n] = xr[n] * xr[n] + xi[n] * xi[n];
             }
-        }
-
-        static double HzToMel(double hz)
-        {
-            return 2595 * Math.Log10(1 + hz / 700);
-        }
-
-        static double MelToHz(double mel)
-        {
-            return (Math.Pow(10, mel / 2595) - 1) * 700;
-        }
-
-        static double[] MakeMelBands(double melMinHz, double melMaxHz, int nMelBanks)
-        {
-            double melMin = HzToMel(melMinHz);
-            double melMax = HzToMel(melMaxHz);
-            double[] melBanks = new double[nMelBanks + 2];
-            for (int i = 0; i < nMelBanks + 2; i++)
-            {
-                double mel = (melMax - melMin) * i / (nMelBanks + 1) + melMin;
-                melBanks[i] = MelToHz(mel);
-            }
-            return melBanks;
         }
     }
 }

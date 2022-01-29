@@ -67,6 +67,9 @@
     <Compile Include="AudioFeatureBuffer.cs" />
     <Compile Include="AudioFeatureExtractor.cs" />
     <Compile Include="AudioPreprocessor.cs" />
+    <Compile Include="MelBands.cs" />
+    <Compile Include="HTKMelBands.cs" />
+    <Compile Include="SlaneyMelBands.cs" />
     <Compile Include="AudioToMelSpectrogramPreprocessor.cs" />
     <Compile Include="CharTokenizer.cs" />
     <Compile Include="FFT.cs" />
