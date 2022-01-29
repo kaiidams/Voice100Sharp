@@ -21,6 +21,7 @@ namespace Voice100App
 
         static void Main(string[] args)
         {
+            TestSpeechRecognition();
             CreateSpeechRecognizer();
             CreateSpeechSynthesizer();
 
@@ -135,6 +136,30 @@ namespace Voice100App
         private static void OnDataAvailable(object sender, WaveInEventArgs e)
         {
             _speechRecognizer.AddAudioBytes(e.Buffer, e.BytesRecorded);
+        }
+
+        private static void TestSpeechRecognition()
+        {
+            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
+            string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
+            string inputPath = Path.Combine(inputDirPath, "transcript.txt");
+            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
+
+            using (var recognizer = new SpeechRecognizer(modelPath))
+            using (var reader = File.OpenText(inputPath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string[] parts = line.Split('|');
+                    string name = parts[0];
+                    string targetText = parts[1];
+                    string waveFile = Path.Combine(inputDirPath, name);
+                    var waveform = WaveFile.ReadWav(waveFile, 16000, true);
+                    string predictText = recognizer.Recognize(waveform);
+                    Console.WriteLine("{0}|{1}|{2}", name, targetText, predictText);
+                }
+            }
         }
     }
 }

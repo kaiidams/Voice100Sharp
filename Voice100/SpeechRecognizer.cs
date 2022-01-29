@@ -11,17 +11,17 @@ namespace Voice100
 {
     public class SpeechRecognizer : IDisposable
     {
-        private const string Vocabulary = " abcdefghijklmnopqrstuvwxyz'_";
+        private const string Vocabulary = "_ abcdefghijklmnopqrstuvwxyz'";
         private readonly Regex mergeRx = new Regex(@"(.)\1+");
 
-        private readonly AudioToMelSpectrogramPreprocessor _preprocessor;
+        private readonly AudioPreprocessor _preprocessor;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
         public SpeechRecognizer(string filePath)
         {
             _nMelBands = 64;
-            _preprocessor = new AudioToMelSpectrogramPreprocessor();
+            _preprocessor = new AudioPreprocessor();
             _inferSess = new InferenceSession(filePath);
         }
 
@@ -37,9 +37,9 @@ namespace Voice100
             var container = new List<NamedOnnxValue>();
             var audioSignalData = new DenseTensor<float>(
                 audioSignal,
-                new int[3] { 1, _nMelBands, audioSignal.Length / _nMelBands });
-            container.Add(NamedOnnxValue.CreateFromTensor("audio_signal", audioSignalData));
-            using (var res = _inferSess.Run(container, new string[] { "logprobs" }))
+                new int[3] { 1, audioSignal.Length / _nMelBands, _nMelBands });
+            container.Add(NamedOnnxValue.CreateFromTensor("audio", audioSignalData));
+            using (var res = _inferSess.Run(container, new string[] { "logits" }))
             {
                 foreach (var score in res)
                 {

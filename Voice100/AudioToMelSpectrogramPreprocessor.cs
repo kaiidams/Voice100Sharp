@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Voice100
 {
-    internal class AudioToMelSpectrogramPreprocessor
+    internal class AudioToMelSpectrogramPreprocessor : AudioPreprocessor
     {
         private const double InvShortMaxValue = 1.0 / short.MaxValue;
 
@@ -49,7 +49,7 @@ namespace Voice100
             _stdOffset = 1e-5;
         }
 
-        public float[] Process(short[] waveform)
+        public override float[] Process(short[] waveform)
         {
             int audioSignalLength = waveform.Length / _hopWidth + 1;
             float[] audioSignal = new float[_nMelBands * audioSignalLength]; 

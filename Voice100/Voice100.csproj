@@ -66,6 +66,7 @@
   <ItemGroup>
     <Compile Include="AudioFeatureBuffer.cs" />
     <Compile Include="AudioFeatureExtractor.cs" />
+    <Compile Include="AudioPreprocessor.cs" />
     <Compile Include="AudioToMelSpectrogramPreprocessor.cs" />
     <Compile Include="Encoder.cs" />
     <Compile Include="FFT.cs" />
