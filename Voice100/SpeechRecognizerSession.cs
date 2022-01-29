@@ -179,24 +179,12 @@ namespace Voice100
             }
             double audioScale = 0.8 / audioMaxShortValue;
 
-            float[] audioFloat = new float[audio.Length];
-            int max = 0;
-            for (int i = 0; i < audioFloat.Length; i++)
-            {
-                audioFloat[i] = audio[i];
-                max = Math.Max(max, Math.Abs(audio[i]));
-            }
-            for (int i = 0; i < audioFloat.Length; i++)
-            {
-                audioFloat[i] = (float)(0.8 * audioFloat[i] / max);
-            }
-
             float[] melspec = new float[64 * ((audioLength - 400) / 160 + 1)];
             int melspecOffset = 0;
 #if true
-            for (int i = 0; i + 400 <= audioFloat.Length; i += 160)
+            for (int i = 0; i + 400 <= audio.Length; i += 160)
             {
-                _featureExtractor.MelSpectrogram(audioFloat, i, melspec, melspecOffset);
+                _featureExtractor.MelSpectrogram(audio, i, audioScale, melspec, melspecOffset);
                 melspecOffset += 64;
             }
 #else

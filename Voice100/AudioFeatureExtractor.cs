@@ -35,9 +35,9 @@ namespace Voice100
             _logOffset = logOffset;
         }
 
-        public void Spectrogram(float[] waveform, int waveformOffset, float[] spec, int specOffset)
+        public void Spectrogram(short[] waveform, int waveformOffset, double scale, float[] spec, int specOffset)
         {
-            ReadFrame(waveform, waveformOffset, _temp1);
+            ReadFrame(waveform, waveformOffset, scale, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToMagnitude(_temp2, _temp1, _fftLength);
             int specLength = _fftLength / 2 + 1;
@@ -46,14 +46,6 @@ namespace Voice100
                 float value = (float)(20.0 * Math.Log(_temp2[i] + _logOffset));
                 spec[specOffset + i] = value;
             }
-        }
-
-        public void MelSpectrogram(float[] waveform, int waveformOffset, float[] melspec, int melspecOffset)
-        {
-            ReadFrame(waveform, waveformOffset, _temp1);
-            FFT.CFFT(_temp1, _temp2, _fftLength);
-            ToSquareMagnitude(_temp2, _temp1, _fftLength);
-            ToMelSpec(_temp2, melspec, melspecOffset);
         }
 
         public void MelSpectrogram(short[] waveform, int waveformOffset, double scale, float[] melspec, int melspecOffset)
@@ -92,18 +84,6 @@ namespace Voice100
                     j++;
                 }
                 melspec[melspecOffset + i] = (float)Math.Log(v + _logOffset);
-            }
-        }
-
-        private void ReadFrame(float[] waveform, int offset, double[] frame)
-        {
-            for (int i = 0; i < _window.Length; i++)
-            {
-                frame[i] = waveform[offset + i] * _window[i];
-            }
-            for (int i = _window.Length; i < frame.Length; i++)
-            {
-                frame[i] = 0.0;
             }
         }
 

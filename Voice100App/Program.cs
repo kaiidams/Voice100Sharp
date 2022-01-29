@@ -21,7 +21,7 @@ namespace Voice100App
 
         static void Main(string[] args)
         {
-            TestSpeechRecognition();
+            //TestSpeechRecognition();
             CreateSpeechRecognizer();
             CreateSpeechSynthesizer();
 
