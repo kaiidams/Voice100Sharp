@@ -10,23 +10,25 @@ namespace Voice100
 {
     public class SpeechSynthesizer : IDisposable
     {
-        private readonly Encoder _encoder;
-        private readonly Vocoder _vocoder;
+        private readonly CharTokenizer _encoder;
+        private readonly WORLDVocoder _vocoder;
         private InferenceSession _ttsAlignInferSess;
         private InferenceSession _ttsAudioInferSess;
 
-        public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel)
+        private SpeechSynthesizer()
         {
-            _encoder = new Encoder();
-            _vocoder = new Vocoder();
+            _encoder = new CharTokenizer();
+            _vocoder = new WORLDVocoder();
+        }
+
+        public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel) : this()
+        {
             _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
             _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
         }
 
-        public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel)
+        public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel) : this()
         {
-            _encoder = new Encoder();
-            _vocoder = new Vocoder();
             _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
             _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
         }

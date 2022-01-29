@@ -19,7 +19,7 @@ namespace Voice100
         const int VadWindowLength = 160;
         const int MinRepeatVoicedCount = 10;
 
-        private readonly Encoder _encoder;
+        private readonly CharTokenizer _tokenizer;
         private InferenceSession _inferSess;
         private readonly AudioFeatureExtractor _featureExtractor;
 
@@ -37,7 +37,7 @@ namespace Voice100
 
         private SpeechRecognizerSession()
         {
-            _encoder = new Encoder();
+            _tokenizer = new CharTokenizer();
             _featureExtractor = new AudioFeatureExtractor();
             _audioBytesBuffer = new byte[AudioBytesBufferLength];
             _audioBytesBufferWriteOffset = 0;
@@ -239,8 +239,8 @@ namespace Voice100
                         pred[l] = k;
                     }
 
-                    string text = _encoder.Decode(pred);
-                    text = _encoder.MergeRepeated(text);
+                    string text = _tokenizer.Decode(pred);
+                    text = _tokenizer.MergeRepeated(text);
 
                     OnSpeechRecognition(audio, melspec, text);
                 }

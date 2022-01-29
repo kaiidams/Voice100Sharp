@@ -11,10 +11,8 @@ namespace Voice100
 {
     public class SpeechRecognizer : IDisposable
     {
-        private const string Vocabulary = "_ abcdefghijklmnopqrstuvwxyz'";
-        private readonly Regex mergeRx = new Regex(@"(.)\1+");
-
         private readonly AudioPreprocessor _preprocessor;
+        private readonly CharTokenizer _tokenizer;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
@@ -22,6 +20,7 @@ namespace Voice100
         {
             _nMelBands = 64;
             _preprocessor = new AudioPreprocessor();
+            _tokenizer = new CharTokenizer();
             _inferSess = new InferenceSession(filePath);
         }
 
@@ -44,7 +43,7 @@ namespace Voice100
                 foreach (var score in res)
                 {
                     var s = score.AsTensor<float>();
-                    int[] preds = new int[s.Dimensions[1]];
+                    long[] preds = new long[s.Dimensions[1]];
                     for (int l = 0; l < preds.Length; l++)
                     {
                         int k = -1;
@@ -60,27 +59,10 @@ namespace Voice100
                         preds[l] = k;
                     }
 
-                    text = Decode(preds);
-                    text = MergeRepeated(text);
+                    text = _tokenizer.Decode(preds);
+                    text = _tokenizer.MergeRepeated(text);
                 }
             }
-            return text;
-        }
-
-        private string Decode(int[] preds)
-        {
-            var chars = new char[preds.Length];
-            for (int i = 0; i < chars.Length; i++)
-            {
-                chars[i] = Vocabulary[preds[i]];
-            }
-            return new string(chars);
-        }
-
-        private string MergeRepeated(string text)
-        {
-            text = mergeRx.Replace(text, "$1");
-            text = text.Replace("_", "");
             return text;
         }
     }

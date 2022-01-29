@@ -68,7 +68,7 @@
     <Compile Include="AudioFeatureExtractor.cs" />
     <Compile Include="AudioPreprocessor.cs" />
     <Compile Include="AudioToMelSpectrogramPreprocessor.cs" />
-    <Compile Include="Encoder.cs" />
+    <Compile Include="CharTokenizer.cs" />
     <Compile Include="FFT.cs" />
     <Compile Include="ModelDownloader.cs" />
     <Compile Include="Program.cs" />
@@ -77,10 +77,10 @@
     <Compile Include="SpeechRecognizer.cs" />
     <Compile Include="SpeechRecognizerSession.cs" />
     <Compile Include="SpeechSynthesizer.cs" />
-    <Compile Include="Vocoder.cs" />
     <Compile Include="WaveFile.cs" />
     <Compile Include="WebRtcVad.cs" />
     <Compile Include="Window.cs" />
+    <Compile Include="WORLDVocoder.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
