@@ -6,7 +6,7 @@ Clone the repository. Make sure to enable
 [Git LFS](https://git-lfs.github.com/)
 as WAV files are stored in LFS.
 
-```
+```s
 git clone https://github.com/kaiidams/Voice100Sharp.git
 ```
 
