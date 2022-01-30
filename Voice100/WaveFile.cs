@@ -9,19 +9,36 @@ namespace Voice100
     public static class WaveFile
     {
         /// <summary>
-        /// Load WAV file as a short array.
+        /// Load a WAV file as a short array.
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path">File to read.</param>
         /// <param name="rate"></param>
         /// <param name="mono"></param>
-        /// <returns></returns>
+        /// <returns>Waveform data.</returns>
         /// <exception cref="InvalidDataException"></exception>
         public static short[] ReadWav(string path, int rate, bool mono)
         {
             using (var stream = File.OpenRead(path))
-            using (var reader = new BinaryReader(stream))
+            using (var reader = new BinaryReader(stream, Encoding.ASCII))
             {
                 return ReadWav(reader, rate, mono);
+            }
+        }
+
+        /// <summary>
+        /// Save a short array as a WAV file.
+        /// </summary>
+        /// <param name="path">File to write.</param>
+        /// <param name="rate"></param>
+        /// <param name="mono"></param>
+        /// <param name="waveform">Waveform data.</param>
+        /// <returns></returns>
+        public static void WriteWav(string path, int rate, bool mono, short[] waveform)
+        {
+            using (var stream = File.OpenWrite(path))
+            using (var writer = new BinaryWriter(stream, Encoding.ASCII))
+            {
+                WriteWav(writer, rate, mono, waveform);
             }
         }
 
@@ -50,7 +67,7 @@ namespace Voice100
                     int avgBytesPerSec = reader.ReadInt32();
                     short blockAlign = reader.ReadInt16();
                     short bitsPerSample = reader.ReadInt16();
-                    if (avgBytesPerSec * 8 != originalRate * bitsPerSample * numChannels)
+                    if (avgBytesPerSec * 8 != originalRate * bitsPerSample * numChannels || blockAlign * 8 != bitsPerSample)
                     {
                         throw new InvalidDataException();
                     }
@@ -68,6 +85,43 @@ namespace Voice100
                     }
                 }
             }
+        }
+
+        private static void WriteWav(BinaryWriter writer, int rate, bool mono, short[] waveform)
+        {
+            short formatTag = 1; // PCM
+            short numChannels = (short)(mono ? 1 : 2);
+            short bitsPerSample = 16;
+            int avgBytesPerSec = rate * bitsPerSample * numChannels / 8;
+            short blockAlign = (short)(bitsPerSample / 8);
+
+            string fourCC = "RIFF";
+            writer.Write(fourCC.ToCharArray());
+            int chunkLen = 36 + waveform.Length * (bitsPerSample / 8);
+            writer.Write(chunkLen);
+
+            fourCC = "WAVE";
+            writer.Write(fourCC.ToCharArray());
+
+            fourCC = "fmt ";
+            chunkLen = 16;
+
+            writer.Write(fourCC.ToCharArray());
+            writer.Write(chunkLen);
+            writer.Write(formatTag);
+            writer.Write(numChannels);
+            writer.Write(rate);
+            writer.Write(avgBytesPerSec);
+            writer.Write(blockAlign);
+            writer.Write(bitsPerSample);
+
+            fourCC = "data";
+            chunkLen = waveform.Length * (bitsPerSample / 8);
+
+            writer.Write(fourCC.ToCharArray());
+            writer.Write(chunkLen);
+            var waveformBytes = MemoryMarshal.Cast<short, byte>(waveform);
+            writer.Write(waveformBytes.ToArray());
         }
     }
 }

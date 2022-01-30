@@ -21,7 +21,7 @@ namespace Voice100App
 
         static void Main(string[] args)
         {
-            //TestSpeechRecognition();
+            // TestSpeechRecognition();
             CreateSpeechRecognizer();
             CreateSpeechSynthesizer();
 
@@ -106,16 +106,7 @@ namespace Voice100App
         private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
         {
             string outputFilePath = $"vid-{voiceId}.wav";
-            using (var writer = new WaveFileWriter(outputFilePath, new WaveFormat(16000, 16, 1)))
-            {
-                writer.WriteSamples(audio, 0, audio.Length);
-            }
-
-            using (var o = new FileStream($"vid-{voiceId}.raw", FileMode.Create, FileAccess.Write))
-            {
-                var m = MemoryMarshal.Cast<short, byte>(audio).ToArray();
-                o.Write(m, 0, m.Length);
-            }
+            WaveFile.WriteWav(outputFilePath, 16000, true, audio);
 
             using (var o = new FileStream($"vid-{voiceId}.bin", FileMode.Create, FileAccess.Write))
             {
