@@ -13,7 +13,8 @@ namespace Voice100App
 {
     class Program
     {
-        const string AsrModel = "QuartzNet15x5Base-En";
+        //const string AsrModel = "QuartzNet15x5Base-En";
+        const string AsrModel = "voice100";
 
         static SpeechRecognizerSession _speechRecognizerSession;
         static SpeechSynthesizer _speechSynthesizer;
@@ -39,8 +40,7 @@ namespace Voice100App
             var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
             _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
             _speechRecognizerSession.OnSpeechRecognition += OnSpeechRecognition;
-
-            await BuildSpeechSynthesizerAsync();
+            _speechSynthesizer = await BuildSpeechSynthesizerAsync();
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
@@ -124,7 +124,7 @@ namespace Voice100App
             return recognizer;
         }
 
-        private static async Task BuildSpeechSynthesizerAsync()
+        private static async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync()
         {
             string alignModelPath;
             string audioModelPath;
@@ -140,7 +140,7 @@ namespace Voice100App
                     "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
                     "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
             }
-            _speechSynthesizer = new SpeechSynthesizer(alignModelPath, audioModelPath);
+            return new SpeechSynthesizer(alignModelPath, audioModelPath);
         }
 
         private static IWaveIn CreateWaveIn()

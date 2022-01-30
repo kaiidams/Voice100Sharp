@@ -65,17 +65,17 @@ namespace Voice100
         public AudioProcessor(
             int sampleRate = 16000,
             string window = "hann",
-            int windowLength = 400,
-            int hopLength = 160,
-            int fftLength = 512,
-            double preNormalize = 0.8,
+            int windowLength = 0,
+            int hopLength = 512,
+            int fftLength = 2048,
+            double preNormalize = 0.0,
             double preemph = 0.0,
-            bool center = false,
-            int nMelBands = 64, 
+            bool center = true,
+            int nMelBands = 128,
             double melMinHz = 0.0,
             double melMaxHz = 0.0,
-            bool htk = true,
-            string melNormalize = null,
+            bool htk = false,
+            string melNormalize = "slaney",
             double logOffset = 1e-6,
             bool postNormalize = false,
             double postNormalizeOffset = 1e-5)
@@ -88,6 +88,7 @@ namespace Voice100
             _preNormalize = preNormalize;
             _preemph = preemph;
             // int winLength = (int)(sampleRate * windowSize); // 320
+            if (windowLength == 0) windowLength = fftLength;
             _window = Window.MakeWindow(window, windowLength);
             _windowType = GetWindowType(center, preemph);
             _hopLength = hopLength;
