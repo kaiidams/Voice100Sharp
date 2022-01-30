@@ -12,7 +12,7 @@ namespace Voice100
     public class SpeechRecognizerSession : IDisposable
     {
         public delegate void DebugInfoEvent(string text);
-        public delegate void SpeechRecognitionEvent(short[] audio, float[] melspec, string text);
+        public delegate void SpeechRecognitionEvent(short[] audio, string text);
 
         public const int DefaultSampleRate = 16000;
         public const int DefaultAudioBytesBufferLength = 10 * DefaultSampleRate * sizeof(short);
@@ -21,9 +21,7 @@ namespace Voice100
 
         private readonly int _sampleRate;
 
-        private readonly CharTokenizer _tokenizer;
-        private InferenceSession _inferSess;
-        private readonly AudioProcessor _featureExtractor;
+        private SpeechRecognizer _recognizer;
 
         // Ring buffer
         private byte[] _audioBytesBuffer;
@@ -39,8 +37,6 @@ namespace Voice100
         private SpeechRecognizerSession()
         {
             _sampleRate = DefaultSampleRate;
-            _tokenizer = new CharTokenizer();
-            _featureExtractor = new AudioProcessor();
             _audioBytesBuffer = new byte[DefaultAudioBytesBufferLength];
             _audioBytesBufferWriteOffset = 0;
             _audioBufferVadOffset = 0;
@@ -52,21 +48,7 @@ namespace Voice100
 
         public SpeechRecognizerSession(string onnxPath) : this()
         {
-            _inferSess = new InferenceSession(onnxPath);
-        }
-
-        public SpeechRecognizerSession(byte[] onnxData) : this()
-        {
-#if false
-            var so = new SessionOptions();
-            uint NNAPI_FLAG_USE_FP16 = 0x001;
-            uint NNAPI_FLAG_USE_NCHW = 0x002;
-            uint NNAPI_FLAG_CPU_DISABLED = 0x004;
-            so.AppendExecutionProvider_Nnapi(NNAPI_FLAG_USE_NCHW | NNAPI_FLAG_USE_FP16 | NNAPI_FLAG_CPU_DISABLED);
-            _inferSess = new InferenceSession(onnxData, so);
-#else
-            _inferSess = new InferenceSession(onnxData);
-#endif
+            _recognizer = new SpeechRecognizer(onnxPath);
         }
 
         public bool IsVoiced { get; private set; }
@@ -156,31 +138,7 @@ namespace Voice100
         private void InvokeDeactivate(Span<short> audioBuffer)
         {
             var audio = GetAudioFromBuffer(audioBuffer);
-            int maxAudioValue = GetMaxAudioValue(audio);
-            double audioScale = 0.8 / maxAudioValue;
-
-            float[] melspec = new float[64 * ((audio.Length - 400) / 160 + 1)];
-            int melspecOffset = 0;
-
-            for (int i = 0; i + 400 <= audio.Length; i += 160)
-            {
-                _featureExtractor.MelSpectrogram(audio, i, audioScale, melspec, melspecOffset);
-                melspecOffset += 64;
-            }
-
-            AnalyzeAudio(audio, melspec);
-        }
-
-        private static int GetMaxAudioValue(short[] audio)
-        {
-            int maxValue = 1;
-            for (int i = 0; i < audio.Length; i++)
-            {
-                int value = Math.Abs(audio[i]);
-                if (maxValue < value) maxValue = value;
-            }
-
-            return maxValue;
+            AnalyzeAudio(audio);
         }
 
         private short[] GetAudioFromBuffer(Span<short> audioBuffer)
@@ -203,49 +161,20 @@ namespace Voice100
             return audio;
         }
 
-        private void AnalyzeAudio(short[] audio, float[] melspec)
+        private void AnalyzeAudio(short[] audio)
         {
-            var container = new List<NamedOnnxValue>();
-            int[] melspecLength = new int[1] { melspec.Length };
-            var audioData = new DenseTensor<float>(melspec, new int[3] { 1, melspec.Length / 64, 64 });
-            container.Add(NamedOnnxValue.CreateFromTensor("audio", audioData));
-            using (var res = _inferSess.Run(container, new string[] { "logits" }))
-            {
-                foreach (var score in res)
-                {
-                    var s = score.AsTensor<float>();
-                    long[] pred = new long[s.Dimensions[1]];
-                    for (int l = 0; l < pred.Length; l++)
-                    {
-                        int k = -1;
-                        float m = -10000.0f;
-                        for (int j = 0; j < s.Dimensions[2]; j++)
-                        {
-                            if (m < s[0, l, j])
-                            {
-                                k = j;
-                                m = s[0, l, j];
-                            }
-                        }
-                        pred[l] = k;
-                    }
-
-                    string text = _tokenizer.Decode(pred);
-                    text = _tokenizer.MergeRepeated(text);
-
-                    OnSpeechRecognition(audio, melspec, text);
-                }
-            }
+            string text = _recognizer.Recognize(audio);
+            OnSpeechRecognition(audio, text);
         }
 
         protected virtual void Dispose(bool disposing)
         {
             if (disposing)
             {
-                if (_inferSess != null)
+                if (_recognizer != null)
                 {
-                    _inferSess.Dispose();
-                    _inferSess = null;
+                    _recognizer.Dispose();
+                    _recognizer = null;
                 }
                 if (_vad != null)
                 {

@@ -28,7 +28,7 @@ namespace Voice100App
             _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
             _dataDirectoryPath = Path.Combine(appDirPath, "Data");
             Directory.CreateDirectory(_dataDirectoryPath);
-            await TestSpeechRecognitionAsync();
+            //await TestSpeechRecognitionAsync();
             await BuildSpeechRecognizerAsync();
             await BuildSpeechSynthesizerAsync();
 
@@ -128,19 +128,11 @@ namespace Voice100App
             return waveIn;
         }
 
-        private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
+        private static void OnSpeechRecognition(short[] audio, string text)
         {
             string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
             WaveFile.WriteWav(outputFilePath, 16000, true, audio);
-
-            string melFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.bin");
-            using (var o = File.OpenWrite(melFilePath))
-            {
-                var m = MemoryMarshal.Cast<float, byte>(melspec).ToArray();
-                o.Write(m, 0, m.Length);
-            }
-
             Console.WriteLine("Recognized: {0}", text);
         }
 
