@@ -46,30 +46,30 @@ namespace Voice100
         public override float[] Process(short[] waveform)
         {
             int audioSignalLength = waveform.Length / _hopLength + 1;
-            float[] audioSignal = new float[_nMelBands * audioSignalLength]; 
-            for (int i = 0; i < audioSignalLength; i++)
+            float[] audioSignal = new float[_nMelBands * audioSignalLength];
+            int waveformOffset = 0;
+            for (int audioSignalOffset = 0; audioSignalOffset < audioSignal.Length; audioSignalOffset += _nMelBands)
             {
-                MelSpectrogram(
-                    waveform, _hopLength * i, 
-                    audioSignal, i, audioSignalLength);
+                MelSpectrogram(waveform, waveformOffset, audioSignal, audioSignalOffset);
+                waveformOffset += _hopLength;
             }
-            Normalize(audioSignal, audioSignalLength);
+            Normalize(audioSignal);
             return audioSignal;
         }
 
         private void MelSpectrogram(
             short[] waveform, int waveformPos, 
-            float[] melspec, int melspecOffset, int melspecStride)
+            float[] melspec, int melspecOffset)
         {
             ReadFrame(waveform, waveformPos, InvShortMaxValue, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToSquareMagnitude(_temp2, _temp1, _fftLength);
-            ToMelSpec(_temp2, melspec, melspecOffset, melspecStride);
+            ToMelSpec(_temp2, melspec, melspecOffset);
         }
 
         private void ToMelSpec(
             double[] spec,
-            float[] melspec, int melspecOffset, int melspecStride)
+            float[] melspec, int melspecOffset)
         {
             for (int i = 0; i < _nMelBands; i++)
             {
@@ -96,34 +96,35 @@ namespace Voice100
                     v += spec[j] * r * 2 / (endHz - startHz);
                     j++;
                 }
-                melspec[melspecOffset + melspecStride * i] = (float)Math.Log(v + _logOffset);
+                melspec[melspecOffset + i] = (float)Math.Log(v + _logOffset);
             }
         }
 
-        private void Normalize(float[] melspec, int melspecStride)
+        private void Normalize(float[] melspec)
         {
+            int melspecLength = melspec.Length / _nMelBands;
             for (int i = 0; i < _nMelBands; i++)
             {
                 double sum = 0;
-                for (int j = 0; j < melspecStride; j++)
+                for (int j = 0; j < melspecLength; j++)
                 {
-                    double v = melspec[melspecStride * i + j];
+                    double v = melspec[i + _nMelBands * j];
                     sum += v;
                 }
-                float mean = (float)(sum / melspecStride);
+                float mean = (float)(sum / melspecLength);
                 sum = 0;
-                for (int j = 0; j < melspecStride; j++)
+                for (int j = 0; j < melspecLength; j++)
                 {
-                    double v = melspec[melspecStride * i + j] - mean;
+                    double v = melspec[i + _nMelBands * j] - mean;
                     sum += v * v;
                 }
-                double std = Math.Sqrt(sum / melspecStride);
+                double std = Math.Sqrt(sum / melspecLength);
                 float invStd = (float)(1.0 / (_stdOffset + std));
 
-                for (int j = 0; j < melspecStride; j++)
+                for (int j = 0; j < melspecLength; j++)
                 {
-                    float v = melspec[melspecStride * i + j];
-                    melspec[melspecStride * i + j] = (v - mean) * invStd;
+                    float v = melspec[i + _nMelBands * j];
+                    melspec[i + _nMelBands * j] = (v - mean) * invStd;
                 }
             }
         }

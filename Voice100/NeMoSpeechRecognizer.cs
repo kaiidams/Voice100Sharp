@@ -34,7 +34,7 @@ namespace Voice100
         {
             string text = string.Empty;
             var audioSignal = _preprocessor.Process(waveform);
-            //audioSignal = Transpose(audioSignal, _nMelBands);
+            audioSignal = Transpose(audioSignal, _nMelBands);
             var container = new List<NamedOnnxValue>();
             var audioSignalData = new DenseTensor<float>(
                 audioSignal,
