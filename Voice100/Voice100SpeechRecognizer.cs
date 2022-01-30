@@ -17,7 +17,22 @@ namespace Voice100
         public Voice100SpeechRecognizer(string filePath)
         {
             _nMelBands = 64;
-            _processor = new AudioProcessor();
+            _processor = new AudioProcessor(
+                sampleRate: 16000,
+                window: "hann",
+                windowLength: 400,
+                hopLength: 160,
+                fftLength: 512,
+                preNormalize: 0.8,
+                preemph: 0.0,
+                center: false,
+                nMelBands: 64,
+                melMinHz: 0.0,
+                melMaxHz: 0.0,
+                htk: true,
+                melNormalize: null,
+                logOffset: 1e-6,
+                postNormalize: false);
             _tokenizer = new CharTokenizer();
             _inferSess = new InferenceSession(filePath);
         }

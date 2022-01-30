@@ -12,6 +12,12 @@ namespace Voice100
             CenterPreemph
         }
 
+        private enum MelType
+        {
+            None,
+            Slaney
+        }
+
         private static WindowType GetWindowType(bool center, double preemph)
         {
             if (preemph == 0.0)
@@ -24,16 +30,35 @@ namespace Voice100
             }
         }
 
+        private static MelType GetMelType(string melNormalize)
+        {
+            if (string.IsNullOrWhiteSpace(melNormalize))
+            {
+                return MelType.None;
+            }
+            if (melNormalize == "slaney")
+            {
+                return MelType.Slaney;
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+
         protected readonly double[] _window;
         private readonly WindowType _windowType;
         protected readonly int _hopLength;
         private readonly double _preNormalize;
+        private readonly bool _postNormalize;
+        private readonly double _postNormalizeOffset;
         protected readonly double _preemph;
         protected readonly double[] _melBands;
         protected readonly double[] _temp1;
         protected readonly double[] _temp2;
         protected readonly int _fftLength;
         protected readonly int _nMelBands;
+        private readonly MelType _melType;
         protected readonly double _sampleRate;
         private readonly double _logOffset;
 
@@ -50,7 +75,10 @@ namespace Voice100
             double melMinHz = 0.0,
             double melMaxHz = 0.0,
             bool htk = true,
-            double logOffset = 1e-6)
+            string melNormalize = null,
+            double logOffset = 1e-6,
+            bool postNormalize = false,
+            double postNormalizeOffset = 1e-5)
         {
             if (melMaxHz == 0.0)
             {
@@ -65,11 +93,14 @@ namespace Voice100
             _hopLength = hopLength;
             // _hopLength = (int)(sampleRate * windowStride); // 160
             _melBands = MelBands.MakeMelBands(melMinHz, melMaxHz, nMelBands, htk);
+            _melType = GetMelType(melNormalize);
             _temp1 = new double[fftLength];
             _temp2 = new double[fftLength];
             _fftLength = fftLength;
             _nMelBands = nMelBands;
             _logOffset = logOffset;
+            _postNormalize = postNormalize;
+            _postNormalizeOffset = postNormalizeOffset;
         }
 
         public virtual float[] Process(short[] waveform)
@@ -90,6 +121,10 @@ namespace Voice100
             {
                 MelSpectrogram(waveform, waveformOffset, scale, melspec, melspecOffset);
                 waveformOffset += _hopLength;
+            }
+            if (_postNormalize)
+            {
+                PostNormalize(melspec);
             }
             return melspec;
         }
@@ -129,6 +164,19 @@ namespace Voice100
 
         private void ToMelSpec(double[] spec, float[] melspec, int melspecOffset)
         {
+            switch (_melType)
+            {
+                case MelType.None:
+                    ToMelSpecNone(spec, melspec, melspecOffset);
+                    break;
+                case MelType.Slaney:
+                    ToMelSpecSlaney(spec, melspec, melspecOffset);
+                    break;
+            }
+        }
+
+        private void ToMelSpecNone(double[] spec, float[] melspec, int melspecOffset)
+        {
             for (int i = 0; i < _nMelBands; i++)
             {
                 double startHz = _melBands[i];
@@ -152,6 +200,37 @@ namespace Voice100
                         break;
                     double r = (endHz - hz) / (endHz - peakHz);
                     v += spec[j] * r;
+                    j++;
+                }
+                melspec[melspecOffset + i] = (float)Math.Log(v + _logOffset);
+            }
+        }
+
+        private void ToMelSpecSlaney(double[] spec, float[] melspec, int melspecOffset)
+        {
+            for (int i = 0; i < _nMelBands; i++)
+            {
+                double startHz = _melBands[i];
+                double peakHz = _melBands[i + 1];
+                double endHz = _melBands[i + 2];
+                double v = 0.0;
+                int j = (int)(startHz * _fftLength / _sampleRate) + 1;
+                while (true)
+                {
+                    double hz = j * _sampleRate / _fftLength;
+                    if (hz > peakHz)
+                        break;
+                    double r = (hz - startHz) / (peakHz - startHz);
+                    v += spec[j] * r * 2 / (endHz - startHz);
+                    j++;
+                }
+                while (true)
+                {
+                    double hz = j * _sampleRate / _fftLength;
+                    if (hz > endHz)
+                        break;
+                    double r = (endHz - hz) / (endHz - peakHz);
+                    v += spec[j] * r * 2 / (endHz - startHz);
                     j++;
                 }
                 melspec[melspecOffset + i] = (float)Math.Log(v + _logOffset);
@@ -222,6 +301,35 @@ namespace Voice100
             for (int i = 0; i < length; i++)
             {
                 xr[i] = xr[i] * xr[i] + xi[i] * xi[i];
+            }
+        }
+
+        private void PostNormalize(float[] melspec)
+        {
+            int melspecLength = melspec.Length / _nMelBands;
+            for (int i = 0; i < _nMelBands; i++)
+            {
+                double sum = 0;
+                for (int j = 0; j < melspecLength; j++)
+                {
+                    double v = melspec[i + _nMelBands * j];
+                    sum += v;
+                }
+                float mean = (float)(sum / melspecLength);
+                sum = 0;
+                for (int j = 0; j < melspecLength; j++)
+                {
+                    double v = melspec[i + _nMelBands * j] - mean;
+                    sum += v * v;
+                }
+                double std = Math.Sqrt(sum / melspecLength);
+                float invStd = (float)(1.0 / (_postNormalizeOffset + std));
+
+                for (int j = 0; j < melspecLength; j++)
+                {
+                    float v = melspec[i + _nMelBands * j];
+                    melspec[i + _nMelBands * j] = (v - mean) * invStd;
+                }
             }
         }
     }

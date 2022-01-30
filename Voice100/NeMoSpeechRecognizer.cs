@@ -14,14 +14,30 @@ namespace Voice100
         private const string Vocabulary = " abcdefghijklmnopqrstuvwxyz'_";
         private readonly Regex mergeRx = new Regex(@"(.)\1+");
 
-        private readonly AudioToMelSpectrogramPreprocessor _preprocessor;
+        private readonly AudioProcessor _processor;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
         public NeMoSpeechRecognizer(string filePath)
         {
             _nMelBands = 64;
-            _preprocessor = new AudioToMelSpectrogramPreprocessor();
+            _processor = new AudioProcessor(
+                sampleRate: 16000,
+                window: "hann",
+                windowLength: 400,
+                hopLength: 160,
+                fftLength: 512,
+                preNormalize: 0.0,
+                preemph: 0.97,
+                center: true,
+                nMelBands: 64,
+                melMinHz: 0.0,
+                melMaxHz: 0.0,
+                htk: false,
+                melNormalize: "slaney",
+                logOffset: Math.Pow(2, -24),
+                postNormalize: true,
+                postNormalizeOffset: 1e-5);
             _inferSess = new InferenceSession(filePath);
         }
 
@@ -33,7 +49,7 @@ namespace Voice100
         public string Recognize(short[] waveform)
         {
             string text = string.Empty;
-            var audioSignal = _preprocessor.Process(waveform);
+            var audioSignal = _processor.Process(waveform);
             audioSignal = Transpose(audioSignal, _nMelBands);
             var container = new List<NamedOnnxValue>();
             var audioSignalData = new DenseTensor<float>(

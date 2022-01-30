@@ -70,7 +70,6 @@
     <Compile Include="HTKMelBands.cs" />
     <Compile Include="NeMoSpeechRecognizer.cs" />
     <Compile Include="SlaneyMelBands.cs" />
-    <Compile Include="AudioToMelSpectrogramPreprocessor.cs" />
     <Compile Include="CharTokenizer.cs" />
     <Compile Include="FFT.cs" />
     <Compile Include="ModelDownloader.cs" />
