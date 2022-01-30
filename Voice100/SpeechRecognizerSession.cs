@@ -14,32 +14,34 @@ namespace Voice100
         public delegate void DebugInfoEvent(string text);
         public delegate void SpeechRecognitionEvent(short[] audio, float[] melspec, string text);
 
-        const int SampleRate = 16000;
-        const int AudioBytesBufferLength = 10 * SampleRate * sizeof(short);
+        public const int DefaultSampleRate = 16000;
+        public const int DefaultAudioBytesBufferLength = 10 * DefaultSampleRate * sizeof(short);
         const int VadWindowLength = 160;
-        const int MinRepeatVoicedCount = 10;
+        const int MinRepeatVoicedCount = 50;
+
+        private readonly int _sampleRate;
 
         private readonly CharTokenizer _tokenizer;
         private InferenceSession _inferSess;
-        private readonly AudioFeatureExtractor _featureExtractor;
+        private readonly AudioProcessor _featureExtractor;
 
+        // Ring buffer
         private byte[] _audioBytesBuffer;
         private int _audioBytesBufferWriteOffset;
 
         private int _audioBufferVadOffset;
-        private bool _isVoiced;
         private int _voicedRepeatCount;
 
-        private bool _isActive;
         private int _audioBufferActiveOffset;
 
         private WebRtcVad _vad;
 
         private SpeechRecognizerSession()
         {
+            _sampleRate = DefaultSampleRate;
             _tokenizer = new CharTokenizer();
-            _featureExtractor = new AudioFeatureExtractor();
-            _audioBytesBuffer = new byte[AudioBytesBufferLength];
+            _featureExtractor = new AudioProcessor();
+            _audioBytesBuffer = new byte[DefaultAudioBytesBufferLength];
             _audioBytesBufferWriteOffset = 0;
             _audioBufferVadOffset = 0;
             _voicedRepeatCount = 0;
@@ -67,8 +69,8 @@ namespace Voice100
 #endif
         }
 
-        public bool IsVoiced { get { return _isVoiced; } }
-        public bool IsActive { get { return _isActive; } }
+        public bool IsVoiced { get; private set; }
+        public bool IsActive { get; private set; }
         public DebugInfoEvent OnDebugInfo { get; set; }
         public SpeechRecognitionEvent OnSpeechRecognition { get; set; }
 
@@ -112,8 +114,8 @@ namespace Voice100
 
         private void UpdateVoiced(Span<short> audioBuffer)
         {
-            var buffer = audioBuffer.Slice(_audioBufferVadOffset, 160).ToArray();
-            _isVoiced = _vad.Process(16000, buffer);
+            var buffer = audioBuffer.Slice(_audioBufferVadOffset, VadWindowLength).ToArray();
+            IsVoiced = _vad.Process(_sampleRate, buffer);
             _audioBufferVadOffset += VadWindowLength;
             if (_audioBufferVadOffset >= audioBuffer.Length)
             {
@@ -123,14 +125,14 @@ namespace Voice100
 
         private void UpdateActive(Span<short> audioBuffer)
         {
-            if (_isActive)
+            if (IsActive)
             {
                 _voicedRepeatCount = IsVoiced ? 0 : (_voicedRepeatCount + 1);
-                if (_voicedRepeatCount >= MinRepeatVoicedCount * 3)
+                if (_voicedRepeatCount >= MinRepeatVoicedCount)
                 {
                     Console.WriteLine("Deactive");
                     _voicedRepeatCount = 0;
-                    _isActive = false;
+                    IsActive = false;
                     InvokeDeactivate(audioBuffer);
                 }
             }
@@ -141,7 +143,7 @@ namespace Voice100
                 {
                     Console.WriteLine("Active");
                     _voicedRepeatCount = 0;
-                    _isActive = true;
+                    IsActive = true;
                     _audioBufferActiveOffset = _audioBufferVadOffset - 3 * MinRepeatVoicedCount * VadWindowLength;
                     while (_audioBufferActiveOffset < 0)
                     {
@@ -152,6 +154,36 @@ namespace Voice100
         }
 
         private void InvokeDeactivate(Span<short> audioBuffer)
+        {
+            var audio = GetAudioFromBuffer(audioBuffer);
+            int maxAudioValue = GetMaxAudioValue(audio);
+            double audioScale = 0.8 / maxAudioValue;
+
+            float[] melspec = new float[64 * ((audio.Length - 400) / 160 + 1)];
+            int melspecOffset = 0;
+
+            for (int i = 0; i + 400 <= audio.Length; i += 160)
+            {
+                _featureExtractor.MelSpectrogram(audio, i, audioScale, melspec, melspecOffset);
+                melspecOffset += 64;
+            }
+
+            AnalyzeAudio(audio, melspec);
+        }
+
+        private static int GetMaxAudioValue(short[] audio)
+        {
+            int maxValue = 1;
+            for (int i = 0; i < audio.Length; i++)
+            {
+                int value = Math.Abs(audio[i]);
+                if (maxValue < value) maxValue = value;
+            }
+
+            return maxValue;
+        }
+
+        private short[] GetAudioFromBuffer(Span<short> audioBuffer)
         {
             int _audioBufferDeactiveOffset = _audioBufferVadOffset;
             int audioLength = _audioBufferDeactiveOffset - _audioBufferActiveOffset;
@@ -168,36 +200,7 @@ namespace Voice100
                 audio[i] = audioBuffer[audioIndex++];
                 if (audioIndex >= audioBuffer.Length) audioIndex = 0;
             }
-
-            audioIndex = _audioBufferActiveOffset;
-            short audioMaxShortValue = 0;
-            for (int i = 0; i < audioLength; i++)
-            {
-                short value = Math.Abs(audioBuffer[audioIndex++]);
-                if (audioMaxShortValue < value) audioMaxShortValue = value;
-                if (audioIndex >= audioBuffer.Length) audioIndex = 0;
-            }
-            double audioScale = 0.8 / audioMaxShortValue;
-
-            float[] melspec = new float[64 * ((audioLength - 400) / 160 + 1)];
-            int melspecOffset = 0;
-#if true
-            for (int i = 0; i + 400 <= audio.Length; i += 160)
-            {
-                _featureExtractor.MelSpectrogram(audio, i, audioScale, melspec, melspecOffset);
-                melspecOffset += 64;
-            }
-#else
-            while ((_audioBufferActiveOffset + 400) % audioBuffer.Length <= _audioBufferDeactiveOffset)
-            {
-                _featureExtractor.MelSpectrogram(audioBuffer, _audioBufferActiveOffset, audioScale, melspec, melspecOffset);
-                melspecOffset += 64;
-                _audioBufferActiveOffset += 160;
-                while (_audioBufferActiveOffset >= audioBuffer.Length) _audioBufferActiveOffset -= audioBuffer.Length;
-            }
-#endif
-
-            AnalyzeAudio(audio, melspec);
+            return audio;
         }
 
         private void AnalyzeAudio(short[] audio, float[] melspec)

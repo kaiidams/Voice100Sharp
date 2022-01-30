@@ -11,7 +11,7 @@ namespace Voice100
     {
         public const int InputSamplingRate = 16000;
 
-        private readonly AudioFeatureExtractor _mfcc;
+        private readonly AudioProcessor _mfcc;
         private readonly int _stftHopLength;
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
@@ -24,7 +24,7 @@ namespace Voice100
 
         public AudioFeatureBuffer(int stftHopLength = 160, int stftWindowLength = 400, int nMelBands = 64)
         {
-            _mfcc = new AudioFeatureExtractor();
+            _mfcc = new AudioProcessor();
             _stftHopLength = stftHopLength;
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;

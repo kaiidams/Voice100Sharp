@@ -4,14 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Voice100
 {
     public class SpeechRecognizer : IDisposable
     {
-        private readonly AudioPreprocessor _preprocessor;
+        private readonly AudioProcessor _processor;
         private readonly CharTokenizer _tokenizer;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
@@ -19,7 +17,7 @@ namespace Voice100
         public SpeechRecognizer(string filePath)
         {
             _nMelBands = 64;
-            _preprocessor = new AudioPreprocessor();
+            _processor = new AudioProcessor();
             _tokenizer = new CharTokenizer();
             _inferSess = new InferenceSession(filePath);
         }
@@ -32,7 +30,7 @@ namespace Voice100
         public string Recognize(short[] waveform)
         {
             string text = string.Empty;
-            var audioSignal = _preprocessor.Process(waveform);
+            var audioSignal = _processor.Process(waveform);
             var container = new List<NamedOnnxValue>();
             var audioSignalData = new DenseTensor<float>(
                 audioSignal,
@@ -42,28 +40,33 @@ namespace Voice100
             {
                 foreach (var score in res)
                 {
-                    var s = score.AsTensor<float>();
-                    long[] preds = new long[s.Dimensions[1]];
-                    for (int l = 0; l < preds.Length; l++)
-                    {
-                        int k = -1;
-                        float m = -10000.0f;
-                        for (int j = 0; j < s.Dimensions[2]; j++)
-                        {
-                            if (m < s[0, l, j])
-                            {
-                                k = j;
-                                m = s[0, l, j];
-                            }
-                        }
-                        preds[l] = k;
-                    }
-
+                    var preds = ArgMax(score.AsTensor<float>());
                     text = _tokenizer.Decode(preds);
                     text = _tokenizer.MergeRepeated(text);
                 }
             }
             return text;
+        }
+
+        private long[] ArgMax(Tensor<float> score)
+        {
+            long[] preds = new long[score.Dimensions[1]];
+            for (int l = 0; l < preds.Length; l++)
+            {
+                int k = -1;
+                float m = -10000.0f;
+                for (int j = 0; j < score.Dimensions[2]; j++)
+                {
+                    if (m < score[0, l, j])
+                    {
+                        k = j;
+                        m = score[0, l, j];
+                    }
+                }
+                preds[l] = k;
+            }
+
+            return preds;
         }
     }
 }
