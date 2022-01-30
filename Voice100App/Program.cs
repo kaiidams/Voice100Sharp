@@ -13,8 +13,8 @@ namespace Voice100App
 {
     class Program
     {
-        const string AsrModel = "QuartzNet15x5Base-En";
-        //const string AsrModel = "voice100";
+        //const string AsrModel = "QuartzNet15x5Base-En";
+        const string AsrModel = "voice100";
 
         static SpeechRecognizerSession _speechRecognizerSession;
         static SpeechSynthesizer _speechSynthesizer;
