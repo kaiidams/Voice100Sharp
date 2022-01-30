@@ -15,6 +15,7 @@ namespace Voice100
         private readonly Regex mergeRx = new Regex(@"(.)\1+");
 
         private readonly AudioProcessor _processor;
+        private readonly CharTokenizer _tokenizer;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
@@ -38,6 +39,7 @@ namespace Voice100
                 logOffset: Math.Pow(2, -24),
                 postNormalize: true,
                 postNormalizeOffset: 1e-5);
+            _tokenizer = new CharTokenizer(Vocabulary);
             _inferSess = new InferenceSession(filePath);
         }
 
@@ -60,31 +62,15 @@ namespace Voice100
             {
                 foreach (var score in res)
                 {
-                    var s = score.AsTensor<float>();
-                    int[] preds = new int[s.Dimensions[1]];
-                    for (int l = 0; l < preds.Length; l++)
-                    {
-                        int k = -1;
-                        float m = -10000.0f;
-                        for (int j = 0; j < s.Dimensions[2]; j++)
-                        {
-                            if (m < s[0, l, j])
-                            {
-                                k = j;
-                                m = s[0, l, j];
-                            }
-                        }
-                        preds[l] = k;
-                    }
-
-                    text = Decode(preds);
-                    text = MergeRepeated(text);
+                    long[] preds = ArgMax(score.AsTensor<float>());
+                    text = _tokenizer.Decode(preds);
+                    text = _tokenizer.MergeRepeated(text);
                 }
             }
             return text;
         }
 
-        public float[] Transpose(float[] x, int cols)
+        private float[] Transpose(float[] x, int cols)
         {
             var y = new float[x.Length];
             int rows = x.Length / cols;
@@ -98,21 +84,25 @@ namespace Voice100
             return y;
         }
 
-        private string Decode(int[] preds)
+        private long[] ArgMax(Tensor<float> score)
         {
-            var chars = new char[preds.Length];
-            for (int i = 0; i < chars.Length; i++)
+            long[] preds = new long[score.Dimensions[1]];
+            for (int l = 0; l < preds.Length; l++)
             {
-                chars[i] = Vocabulary[preds[i]];
+                int k = -1;
+                float m = -10000.0f;
+                for (int j = 0; j < score.Dimensions[2]; j++)
+                {
+                    if (m < score[0, l, j])
+                    {
+                        k = j;
+                        m = score[0, l, j];
+                    }
+                }
+                preds[l] = k;
             }
-            return new string(chars);
-        }
 
-        private string MergeRepeated(string text)
-        {
-            text = mergeRx.Replace(text, "$1");
-            text = text.Replace("_", "");
-            return text;
+            return preds;
         }
     }
 }
