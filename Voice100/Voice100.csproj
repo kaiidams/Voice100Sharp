@@ -68,6 +68,7 @@
     <Compile Include="AudioProcessor.cs" />
     <Compile Include="MelBands.cs" />
     <Compile Include="HTKMelBands.cs" />
+    <Compile Include="NeMoSpeechRecognizer.cs" />
     <Compile Include="SlaneyMelBands.cs" />
     <Compile Include="AudioToMelSpectrogramPreprocessor.cs" />
     <Compile Include="CharTokenizer.cs" />
@@ -75,9 +76,10 @@
     <Compile Include="ModelDownloader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="SpeechRecognizer.cs" />
+    <Compile Include="ISpeechRecognizer.cs" />
     <Compile Include="SpeechRecognizerSession.cs" />
     <Compile Include="SpeechSynthesizer.cs" />
+    <Compile Include="Voice100SpeechRecognizer.cs" />
     <Compile Include="WaveFile.cs" />
     <Compile Include="WebRtcVad.cs" />
     <Compile Include="Window.cs" />

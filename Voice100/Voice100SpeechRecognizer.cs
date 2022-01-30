@@ -7,14 +7,14 @@ using System.Text;
 
 namespace Voice100
 {
-    public class SpeechRecognizer : IDisposable
+    public class Voice100SpeechRecognizer : ISpeechRecognizer, IDisposable
     {
         private readonly AudioProcessor _processor;
         private readonly CharTokenizer _tokenizer;
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
-        public SpeechRecognizer(string filePath)
+        public Voice100SpeechRecognizer(string filePath)
         {
             _nMelBands = 64;
             _processor = new AudioProcessor();

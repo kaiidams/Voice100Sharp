@@ -21,7 +21,7 @@ namespace Voice100
 
         private readonly int _sampleRate;
 
-        private SpeechRecognizer _recognizer;
+        private ISpeechRecognizer _recognizer;
 
         // Ring buffer
         private byte[] _audioBytesBuffer;
@@ -46,9 +46,9 @@ namespace Voice100
             _vad.SetMode(2);
         }
 
-        public SpeechRecognizerSession(string onnxPath) : this()
+        public SpeechRecognizerSession(ISpeechRecognizer recognizer) : this()
         {
-            _recognizer = new SpeechRecognizer(onnxPath);
+            _recognizer = recognizer;
         }
 
         public bool IsVoiced { get; private set; }

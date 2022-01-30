@@ -13,7 +13,9 @@ namespace Voice100App
 {
     class Program
     {
-        static SpeechRecognizerSession _speechRecognizer;
+        const string AsrModel = "QuartzNet15x5Base-En";
+
+        static SpeechRecognizerSession _speechRecognizerSession;
         static SpeechSynthesizer _speechSynthesizer;
         static BufferedWaveProvider bufferedWaveProvider;
         static string _cacheDirectoryPath;
@@ -28,8 +30,16 @@ namespace Voice100App
             _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
             _dataDirectoryPath = Path.Combine(appDirPath, "Data");
             Directory.CreateDirectory(_dataDirectoryPath);
-            //await TestSpeechRecognitionAsync();
-            await BuildSpeechRecognizerAsync();
+            await TestSpeechRecognitionAsync();
+            await Interactive();
+        }
+
+        static async Task Interactive()
+        {
+            var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
+            _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
+            _speechRecognizerSession.OnSpeechRecognition += OnSpeechRecognition;
+
             await BuildSpeechSynthesizerAsync();
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
@@ -76,19 +86,42 @@ namespace Voice100App
             }
         }
 
-        private static async Task BuildSpeechRecognizerAsync()
+        private static async Task<ISpeechRecognizer> BuildSpeechRecognizerAsync(string model)
         {
-            string modelPath;
-            using (var httpClient = new HttpClient())
+            ISpeechRecognizer recognizer;
+
+            if (model == "voice100")
             {
-                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
-                modelPath = await downloader.MayDownloadAsync(
-                    "asr_en_conv_base_ctc-20220126.onnx",
-                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
-                    "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
+                string modelPath;
+                using (var httpClient = new HttpClient())
+                {
+                    var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                    modelPath = await downloader.MayDownloadAsync(
+                        "asr_en_conv_base_ctc-20220126.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
+                        "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
+                }
+                recognizer = new Voice100SpeechRecognizer(modelPath);
             }
-            _speechRecognizer = new SpeechRecognizerSession(modelPath);
-            _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
+            else if (model == "QuartzNet15x5Base-En")
+            {
+                string modelPath;
+                using (var httpClient = new HttpClient())
+                {
+                    var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                    modelPath = await downloader.MayDownloadAsync(
+                        "QuartzNet15x5Base-En.onnx",
+                        "https://github.com/kaiidams/NeMoOnnxSharp/releases/download/v1.1.0.pre1/QuartzNet15x5Base-En.onnx",
+                        "EE1B72102FD0C5422D088E80F929DBDEE7E889D256A4CE1E412CD49916823695");
+                }
+                recognizer = new NeMoSpeechRecognizer(modelPath);
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+
+            return recognizer;
         }
 
         private static async Task BuildSpeechSynthesizerAsync()
@@ -143,25 +176,16 @@ namespace Voice100App
 
         private static void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            _speechRecognizer.AddAudioBytes(e.Buffer, e.BytesRecorded);
+            _speechRecognizerSession.AddAudioBytes(e.Buffer, e.BytesRecorded);
         }
 
         private static async Task TestSpeechRecognitionAsync()
         {
-            string modelPath;
-            using (var httpClient = new HttpClient())
-            {
-                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
-                modelPath = await downloader.MayDownloadAsync(
-                    "asr_en_conv_base_ctc-20220126.onnx",
-                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
-                    "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
-            }
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
             string inputPath = Path.Combine(inputDirPath, "transcript.txt");
 
-            using (var recognizer = new SpeechRecognizer(modelPath))
+            using (var recognizer = await BuildSpeechRecognizerAsync(AsrModel))
             using (var reader = File.OpenText(inputPath))
             {
                 string line;
