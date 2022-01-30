@@ -2,7 +2,7 @@
 
 namespace Voice100
 {
-    internal class Vocoder
+    internal class WORLDVocoder
     {
 #if true
         const string DllName = "voice100_native";
@@ -20,7 +20,7 @@ namespace Voice100
             float[] f0, float[] logspc, float[] codedap, int f0_length,
             int fft_size, double frame_period, int fs, float log_offset, short[] y, int y_length);
 
-        public Vocoder()
+        public WORLDVocoder()
         {
         }
 

@@ -11,24 +11,25 @@ namespace Voice100
     {
         public const int InputSamplingRate = 16000;
 
-        private readonly AudioFeatureExtractor _mfcc;
+        private readonly AudioProcessor _mfcc;
         private readonly int _stftHopLength;
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
+        private readonly double scale = 1.0 / short.MaxValue;
 
-        private readonly float[] _waveformBuffer;
+        private readonly short[] _waveformBuffer;
         private int _waveformCount;
         private readonly float[] _outputBuffer;
         private int _outputCount;
 
         public AudioFeatureBuffer(int stftHopLength = 160, int stftWindowLength = 400, int nMelBands = 64)
         {
-            _mfcc = new AudioFeatureExtractor();
+            _mfcc = new AudioProcessor();
             _stftHopLength = stftHopLength;
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;
 
-            _waveformBuffer = new float[2 * _stftHopLength + _stftWindowLength];
+            _waveformBuffer = new short[2 * _stftHopLength + _stftWindowLength];
             _waveformCount = 0;
             _outputBuffer = new float[_nMelBands * (_stftWindowLength + _stftHopLength)];
             _outputCount = 0;
@@ -60,7 +61,7 @@ namespace Voice100
             }
         }
 
-        public int Write(float[] waveform, int offset, int count)
+        public int Write(short[] waveform, int offset, int count)
         {
             int written = 0;
 
@@ -75,7 +76,7 @@ namespace Voice100
                 int wavebufferOffset = 0;
                 while (wavebufferOffset + _stftWindowLength < _waveformCount)
                 {
-                    _mfcc.MelSpectrogram(_waveformBuffer, wavebufferOffset, _outputBuffer, _outputCount);
+                    _mfcc.MelSpectrogram(_waveformBuffer, wavebufferOffset, scale, _outputBuffer, _outputCount);
                     _outputCount += _nMelBands;
                     wavebufferOffset += _stftHopLength;
                 }
@@ -97,7 +98,7 @@ namespace Voice100
                 {
                     return written;
                 }
-                _mfcc.MelSpectrogram(waveform, offset + written, _outputBuffer, _outputCount);
+                _mfcc.MelSpectrogram(waveform, offset + written, scale, _outputBuffer, _outputCount);
                 _outputCount += _nMelBands;
                 written += _stftHopLength;
             }

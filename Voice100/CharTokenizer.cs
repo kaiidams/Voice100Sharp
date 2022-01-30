@@ -6,20 +6,22 @@ using System.Text.RegularExpressions;
 
 namespace Voice100
 {
-    internal class Encoder
+    public class CharTokenizer
     {
-        private const string DefaultCharacters = "_ abcdefghijklmnopqrstuvwxyz'";
-        private readonly Regex _defaultCharactersRegex;
+        private const string DefaultVocabulary = "_ abcdefghijklmnopqrstuvwxyz'";
+        private static readonly Regex MergeRx = new Regex(@"(.)\1+");
+
+        private readonly Regex _vocabRx;
         private readonly IDictionary<char, long> _v2i;
         private readonly string _i2v;
 
-        public Encoder() : this(DefaultCharacters)
+        public CharTokenizer() : this(DefaultVocabulary)
         {
         }
 
-        public Encoder(string characters)
+        public CharTokenizer(string characters)
         {
-            _defaultCharactersRegex = new Regex("[^" + DefaultCharacters.Substring(1) + "]");
+            _vocabRx = new Regex("[^" + characters.Substring(1) + "]");
             _i2v = characters;
             _v2i = new Dictionary<char, long>();
             for (int i = 0; i < _i2v.Length; i++) _v2i[_i2v[i]] = i;
@@ -54,7 +56,7 @@ namespace Voice100
 
         public string MergeRepeated(string text)
         {
-            return Regex.Replace(text, @"(.)\1+", @"$1").Replace("_", "");
+            return MergeRx.Replace(text, @"$1").Replace("_", "");
         }
     }
 }

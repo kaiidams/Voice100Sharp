@@ -3,26 +3,44 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using Voice100;
 
 namespace Voice100App
 {
     class Program
     {
-        static SpeechRecognizer _speechRecognizer;
+        //const string AsrModel = "QuartzNet15x5Base-En";
+        const string AsrModel = "voice100";
+
+        static SpeechRecognizerSession _speechRecognizerSession;
         static SpeechSynthesizer _speechSynthesizer;
-        static int voiceId = 0;
         static BufferedWaveProvider bufferedWaveProvider;
+        static string _cacheDirectoryPath;
+        static string _dataDirectoryPath;
         static byte[] waveData;
         static int waveIndex;
         static WaveOut waveOut;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            CreateSpeechRecognizer();
-            CreateSpeechSynthesizer();
+            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
+            _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
+            _dataDirectoryPath = Path.Combine(appDirPath, "Data");
+            Directory.CreateDirectory(_dataDirectoryPath);
+            await TestSpeechRecognitionAsync();
+            //await Interactive();
+        }
+
+        static async Task Interactive()
+        {
+            var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
+            _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
+            _speechRecognizerSession.OnSpeechRecognition += OnSpeechRecognition;
+            _speechSynthesizer = await BuildSpeechSynthesizerAsync();
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
@@ -68,20 +86,61 @@ namespace Voice100App
             }
         }
 
-        private static void CreateSpeechRecognizer()
+        private static async Task<ISpeechRecognizer> BuildSpeechRecognizerAsync(string model)
         {
-            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
-            _speechRecognizer = new SpeechRecognizer(modelPath);
-            _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
+            ISpeechRecognizer recognizer;
+
+            if (model == "voice100")
+            {
+                string modelPath;
+                using (var httpClient = new HttpClient())
+                {
+                    var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                    modelPath = await downloader.MayDownloadAsync(
+                        "asr_en_conv_base_ctc-20220126.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
+                        "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
+                }
+                recognizer = new Voice100SpeechRecognizer(modelPath);
+            }
+            else if (model == "QuartzNet15x5Base-En")
+            {
+                string modelPath;
+                using (var httpClient = new HttpClient())
+                {
+                    var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                    modelPath = await downloader.MayDownloadAsync(
+                        "QuartzNet15x5Base-En.onnx",
+                        "https://github.com/kaiidams/NeMoOnnxSharp/releases/download/v1.1.0.pre1/QuartzNet15x5Base-En.onnx",
+                        "EE1B72102FD0C5422D088E80F929DBDEE7E889D256A4CE1E412CD49916823695");
+                }
+                recognizer = new NeMoSpeechRecognizer(modelPath);
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+
+            return recognizer;
         }
 
-        private static void CreateSpeechSynthesizer()
+        private static async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync()
         {
-            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string alignModelPath = Path.Combine(appDirPath, "Assets", "ttsalign_en_conv_base-20210808.all.ort");
-            string audioModelPath = Path.Combine(appDirPath, "Assets", "ttsaudio_en_conv_base-20220107.all.ort");
-            _speechSynthesizer = new SpeechSynthesizer(alignModelPath, audioModelPath);
+            string alignModelPath;
+            string audioModelPath;
+            using (var httpClient = new HttpClient())
+            {
+                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                alignModelPath = await downloader.MayDownloadAsync(
+                    "ttsalign_en_conv_base-20210808.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
+                    "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
+                audioModelPath = await downloader.MayDownloadAsync(
+                    "ttsaudio_en_conv_base-20220107.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
+                    "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+            }
+            return new SpeechSynthesizer(alignModelPath, audioModelPath);
         }
 
         private static IWaveIn CreateWaveIn()
@@ -102,29 +161,12 @@ namespace Voice100App
             return waveIn;
         }
 
-        private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
+        private static void OnSpeechRecognition(short[] audio, string text)
         {
-            string outputFilePath = $"vid-{voiceId}.wav";
-            using (var writer = new WaveFileWriter(outputFilePath, new WaveFormat(16000, 16, 1)))
-            {
-                writer.WriteSamples(audio, 0, audio.Length);
-            }
-
-            using (var o = new FileStream($"vid-{voiceId}.raw", FileMode.Create, FileAccess.Write))
-            {
-                var m = MemoryMarshal.Cast<short, byte>(audio).ToArray();
-                o.Write(m, 0, m.Length);
-            }
-
-            using (var o = new FileStream($"vid-{voiceId}.bin", FileMode.Create, FileAccess.Write))
-            {
-                var m = MemoryMarshal.Cast<float, byte>(melspec).ToArray();
-                o.Write(m, 0, m.Length);
-            }
-
+            string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
+            WaveFile.WriteWav(outputFilePath, 16000, true, audio);
             Console.WriteLine("Recognized: {0}", text);
-
-            voiceId++;
         }
 
         private static void OnRecordingStopped(object sender, StoppedEventArgs e)
@@ -134,7 +176,30 @@ namespace Voice100App
 
         private static void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            _speechRecognizer.AddAudioBytes(e.Buffer, e.BytesRecorded);
+            _speechRecognizerSession.AddAudioBytes(e.Buffer, e.BytesRecorded);
+        }
+
+        private static async Task TestSpeechRecognitionAsync()
+        {
+            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
+            string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
+            string inputPath = Path.Combine(inputDirPath, "transcript.txt");
+
+            using (var recognizer = await BuildSpeechRecognizerAsync(AsrModel))
+            using (var reader = File.OpenText(inputPath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    string[] parts = line.Split('|');
+                    string name = parts[0];
+                    string targetText = parts[1];
+                    string waveFile = Path.Combine(inputDirPath, name);
+                    var waveform = WaveFile.ReadWav(waveFile, 16000, true);
+                    string predictText = recognizer.Recognize(waveform);
+                    Console.WriteLine("{0}|{1}|{2}", name, targetText, predictText);
+                }
+            }
         }
     }
 }
