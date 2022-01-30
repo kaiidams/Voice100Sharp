@@ -40,7 +40,8 @@ namespace Voice100
         {
             if (File.Exists(cacheFilePath))
             {
-                if (GetFileChecksum(cacheFilePath) == expectedChecksum)
+                string checksum = GetFileChecksum(cacheFilePath);
+                if (string.Compare(checksum, expectedChecksum, true) == 0)
                 {
                     return true;
                 }
@@ -68,7 +69,7 @@ namespace Voice100
             string cacheFilePath = Path.Combine(_cacheDirectoryPath, fileName);
             if (CheckCacheFile(cacheFilePath, sha256))
             {
-                Console.WriteLine("Cache hit");
+                Console.WriteLine("Using cached `{0}'.", fileName);
             }
             else
             {

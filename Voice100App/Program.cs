@@ -3,8 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using Voice100;
 
 namespace Voice100App
@@ -13,17 +15,22 @@ namespace Voice100App
     {
         static SpeechRecognizerSession _speechRecognizer;
         static SpeechSynthesizer _speechSynthesizer;
-        static int voiceId = 0;
         static BufferedWaveProvider bufferedWaveProvider;
+        static string _cacheDirectoryPath;
+        static string _dataDirectoryPath;
         static byte[] waveData;
         static int waveIndex;
         static WaveOut waveOut;
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            // TestSpeechRecognition();
-            CreateSpeechRecognizer();
-            CreateSpeechSynthesizer();
+            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
+            _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
+            _dataDirectoryPath = Path.Combine(appDirPath, "Data");
+            Directory.CreateDirectory(_dataDirectoryPath);
+            await TestSpeechRecognitionAsync();
+            await BuildSpeechRecognizerAsync();
+            await BuildSpeechSynthesizerAsync();
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
@@ -69,19 +76,37 @@ namespace Voice100App
             }
         }
 
-        private static void CreateSpeechRecognizer()
+        private static async Task BuildSpeechRecognizerAsync()
         {
-            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
+            string modelPath;
+            using (var httpClient = new HttpClient())
+            {
+                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                modelPath = await downloader.MayDownloadAsync(
+                    "asr_en_conv_base_ctc-20220126.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
+                    "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
+            }
             _speechRecognizer = new SpeechRecognizerSession(modelPath);
             _speechRecognizer.OnSpeechRecognition += OnSpeechRecognition;
         }
 
-        private static void CreateSpeechSynthesizer()
+        private static async Task BuildSpeechSynthesizerAsync()
         {
-            string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string alignModelPath = Path.Combine(appDirPath, "Assets", "ttsalign_en_conv_base-20210808.all.ort");
-            string audioModelPath = Path.Combine(appDirPath, "Assets", "ttsaudio_en_conv_base-20220107.all.ort");
+            string alignModelPath;
+            string audioModelPath;
+            using (var httpClient = new HttpClient())
+            {
+                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                alignModelPath = await downloader.MayDownloadAsync(
+                    "ttsalign_en_conv_base-20210808.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
+                    "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
+                audioModelPath = await downloader.MayDownloadAsync(
+                    "ttsaudio_en_conv_base-20220107.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
+                    "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+            }
             _speechSynthesizer = new SpeechSynthesizer(alignModelPath, audioModelPath);
         }
 
@@ -105,18 +130,18 @@ namespace Voice100App
 
         private static void OnSpeechRecognition(short[] audio, float[] melspec, string text)
         {
-            string outputFilePath = $"vid-{voiceId}.wav";
+            string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+            string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
             WaveFile.WriteWav(outputFilePath, 16000, true, audio);
 
-            using (var o = new FileStream($"vid-{voiceId}.bin", FileMode.Create, FileAccess.Write))
+            string melFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.bin");
+            using (var o = File.OpenWrite(melFilePath))
             {
                 var m = MemoryMarshal.Cast<float, byte>(melspec).ToArray();
                 o.Write(m, 0, m.Length);
             }
 
             Console.WriteLine("Recognized: {0}", text);
-
-            voiceId++;
         }
 
         private static void OnRecordingStopped(object sender, StoppedEventArgs e)
@@ -129,12 +154,20 @@ namespace Voice100App
             _speechRecognizer.AddAudioBytes(e.Buffer, e.BytesRecorded);
         }
 
-        private static void TestSpeechRecognition()
+        private static async Task TestSpeechRecognitionAsync()
         {
+            string modelPath;
+            using (var httpClient = new HttpClient())
+            {
+                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                modelPath = await downloader.MayDownloadAsync(
+                    "asr_en_conv_base_ctc-20220126.onnx",
+                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
+                    "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
+            }
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
             string inputPath = Path.Combine(inputDirPath, "transcript.txt");
-            string modelPath = Path.Combine(appDirPath, "Assets", "asr_en_conv_base_ctc-20220126.all.ort");
 
             using (var recognizer = new SpeechRecognizer(modelPath))
             using (var reader = File.OpenText(inputPath))
