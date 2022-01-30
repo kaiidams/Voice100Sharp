@@ -2,7 +2,7 @@
 
 namespace Voice100
 {
-    class AudioProcessor
+    public class AudioProcessor
     {
         private enum WindowType
         {
