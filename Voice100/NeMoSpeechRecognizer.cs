@@ -12,7 +12,6 @@ namespace Voice100
     public class NeMoSpeechRecognizer : ISpeechRecognizer
     {
         private const string Vocabulary = " abcdefghijklmnopqrstuvwxyz'_";
-        private readonly Regex mergeRx = new Regex(@"(.)\1+");
 
         private readonly AudioProcessor _processor;
         private readonly CharTokenizer _tokenizer;
