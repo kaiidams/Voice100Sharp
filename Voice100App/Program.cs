@@ -30,11 +30,11 @@ namespace Voice100App
             _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
             _dataDirectoryPath = Path.Combine(appDirPath, "Data");
             Directory.CreateDirectory(_dataDirectoryPath);
-            await TestSpeechRecognitionAsync();
-            //await Interactive();
+            //await TestSpeechRecognitionAsync();
+            await InteractiveAsync();
         }
 
-        static async Task Interactive()
+        static async Task InteractiveAsync()
         {
             var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
             _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
@@ -165,7 +165,18 @@ namespace Voice100App
             string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
             WaveFile.WriteWav(outputFilePath, 16000, true, audio);
+            string outputTextPath = Path.Combine(_dataDirectoryPath, $"{dateString}.txt");
+            WriteTextFile(outputTextPath, text);
             Console.WriteLine("Recognized: {0}", text);
+        }
+
+        private static void WriteTextFile(string path, string text)
+        {
+            using (var stream = File.OpenWrite(path))
+            using (var writer = new StreamWriter(stream))
+            {
+                writer.WriteLine(text);
+            }
         }
 
         private static void OnRecordingStopped(object sender, StoppedEventArgs e)
