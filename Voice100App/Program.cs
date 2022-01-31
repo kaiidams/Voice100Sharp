@@ -31,7 +31,8 @@ namespace Voice100App
             _dataDirectoryPath = Path.Combine(appDirPath, "Data");
             Directory.CreateDirectory(_dataDirectoryPath);
             //await TestSpeechRecognitionAsync();
-            await InteractiveAsync();
+            //await InteractiveAsync();
+            await Program2.InteractiveAsync();
         }
 
         static async Task InteractiveAsync()

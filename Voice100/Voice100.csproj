@@ -65,6 +65,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AudioFeatureBuffer.cs" />
+    <Compile Include="YAMNetSession.cs" />
     <Compile Include="AudioProcessor.cs" />
     <Compile Include="MelBands.cs" />
     <Compile Include="HTKMelBands.cs" />
