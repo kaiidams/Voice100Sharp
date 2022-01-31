@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Voice100;
@@ -18,12 +17,12 @@ namespace Voice100App
 
         static SpeechRecognizerSession _speechRecognizerSession;
         static SpeechSynthesizer _speechSynthesizer;
-        static BufferedWaveProvider bufferedWaveProvider;
+        static BufferedWaveProvider _bufferedWaveProvider;
         static string _cacheDirectoryPath;
         static string _dataDirectoryPath;
-        static byte[] waveData;
-        static int waveIndex;
-        static WaveOut waveOut;
+        static byte[] _waveData;
+        static int _waveIndex;
+        static WaveOut _waveOut;
 
         static async Task Main(string[] args)
         {
@@ -49,13 +48,13 @@ namespace Voice100App
             }
 
             string alignedText;
-            _speechSynthesizer.Speak("Hello, I am a rocket.", out waveData, out alignedText);
-            waveOut = new WaveOut();
-            bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
-            waveOut.Init(bufferedWaveProvider);
-            waveOut.PlaybackStopped += OnPlaybackStopped;
-            waveOut.Play();
-            waveIndex = 0;
+            _speechSynthesizer.Speak("Hello, I am a rocket.", out _waveData, out alignedText);
+            _waveOut = new WaveOut();
+            _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
+            _waveOut.Init(_bufferedWaveProvider);
+            _waveOut.PlaybackStopped += OnPlaybackStopped;
+            _waveOut.Play();
+            _waveIndex = 0;
             AddSample();
             var waveIn = CreateWaveIn();
             waveIn.StartRecording();
@@ -66,19 +65,19 @@ namespace Voice100App
         static void AddSample()
         {
             //Console.WriteLine("{0}/{1}", bufferedWaveProvider.BufferedBytes, bufferedWaveProvider.BufferLength);
-            int len = Math.Min(waveData.Length - waveIndex, bufferedWaveProvider.BufferLength - bufferedWaveProvider.BufferedBytes);
+            int len = Math.Min(_waveData.Length - _waveIndex, _bufferedWaveProvider.BufferLength - _bufferedWaveProvider.BufferedBytes);
             if (len > 0)
             {
-                bufferedWaveProvider.AddSamples(waveData, waveIndex, len);
-                waveIndex += len;
+                _bufferedWaveProvider.AddSamples(_waveData, _waveIndex, len);
+                _waveIndex += len;
             }
         }
 
         private static void OnPlaybackStopped(object sender, StoppedEventArgs e)
         {
-            if (waveIndex >= waveData.Length)
+            if (_waveIndex >= _waveData.Length)
             {
-                waveOut.Stop();
+                _waveOut.Stop();
             }
             else
             {
