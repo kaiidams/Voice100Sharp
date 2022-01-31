@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // アセンブリに関する一般情報は以下の属性セットをとおして制御されます。
 // 制御されます。アセンブリに関連付けられている情報を変更するには、
 // これらの属性値を変更します。
-[assembly: AssemblyTitle("Voice100SharpApp")]
+[assembly: AssemblyTitle("Voice100App")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Katsuya Iida")]
-[assembly: AssemblyProduct("Voice100SharpApp")]
+[assembly: AssemblyProduct("Voice100App")]
 [assembly: AssemblyCopyright("Copyright © Katsuya Iida 2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

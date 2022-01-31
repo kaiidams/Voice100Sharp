@@ -7,15 +7,12 @@ using System.Threading.Tasks;
 
 namespace Voice100
 {
-    class AudioFeatureBuffer
+    internal class AudioFeatureBuffer
     {
-        public const int InputSamplingRate = 16000;
-
-        private readonly AudioProcessor _mfcc;
+        private readonly AudioProcessor _processor;
         private readonly int _stftHopLength;
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
-        private readonly double scale = 1.0 / short.MaxValue;
 
         private readonly short[] _waveformBuffer;
         private int _waveformCount;
@@ -24,7 +21,22 @@ namespace Voice100
 
         public AudioFeatureBuffer(int stftHopLength = 160, int stftWindowLength = 400, int nMelBands = 64)
         {
-            _mfcc = new AudioProcessor();
+            _processor = new AudioProcessor(
+                sampleRate: 16000,
+                window: "hann",
+                windowLength: 400,
+                hopLength: 160,
+                fftLength: 512,
+                preNormalize: 0.8,
+                preemph: 0.0,
+                center: false,
+                nMelBands: 64,
+                melMinHz: 0.0,
+                melMaxHz: 0.0,
+                htk: true,
+                melNormalize: null,
+                logOffset: 1e-6,
+                postNormalize: false);
             _stftHopLength = stftHopLength;
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;
@@ -37,29 +49,6 @@ namespace Voice100
 
         public int OutputCount { get { return _outputCount; } }
         public float[] OutputBuffer { get { return _outputBuffer; } }
-
-        public float[] Resample(float[] waveform, int sampleRate)
-        {
-            if (sampleRate == InputSamplingRate)
-            {
-                return waveform;
-            }
-            else
-            {
-                int toLen = (int)(waveform.Length * ((double)InputSamplingRate / sampleRate));
-                float stepRate = ((float)sampleRate) / InputSamplingRate;
-                float[] toWaveform = new float[toLen];
-                for (int toIndex = 0; toIndex < toWaveform.Length; toIndex++)
-                {
-                    int fromIndex = (int)(toIndex * stepRate);
-                    if (fromIndex < waveform.Length)
-                    {
-                        toWaveform[toIndex] = waveform[fromIndex];
-                    }
-                }
-                return toWaveform;
-            }
-        }
 
         public int Write(short[] waveform, int offset, int count)
         {
@@ -76,7 +65,7 @@ namespace Voice100
                 int wavebufferOffset = 0;
                 while (wavebufferOffset + _stftWindowLength < _waveformCount)
                 {
-                    _mfcc.MelSpectrogram(_waveformBuffer, wavebufferOffset, scale, _outputBuffer, _outputCount);
+                    _processor.Process(_waveformBuffer, wavebufferOffset, _outputBuffer, _outputCount);
                     _outputCount += _nMelBands;
                     wavebufferOffset += _stftHopLength;
                 }
@@ -98,7 +87,7 @@ namespace Voice100
                 {
                     return written;
                 }
-                _mfcc.MelSpectrogram(waveform, offset + written, scale, _outputBuffer, _outputCount);
+                _processor.Process(waveform, offset + written, _outputBuffer, _outputCount);
                 _outputCount += _nMelBands;
                 written += _stftHopLength;
             }
