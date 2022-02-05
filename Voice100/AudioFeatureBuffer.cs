@@ -50,7 +50,7 @@ namespace Voice100
         public int OutputCount { get { return _outputCount; } }
         public float[] OutputBuffer { get { return _outputBuffer; } }
 
-        public int Write(float[] waveform, int offset, int count)
+        public int Write(short[] waveform, int offset, int count)
         {
             int written = 0;
 
