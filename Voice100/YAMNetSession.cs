@@ -19,16 +19,14 @@ namespace Voice100
         string[] _classMap;
         private const int NumClasses = 521;
 
-        public YAMNetSession(string modelPath)
+        public YAMNetSession(string modelPath, string classMapPath)
         {
             _sess = new InferenceSession(modelPath);
             _sampleBuffer = new float[400 + 95 * 160];
             _featureBuffer = new AudioFeatureBuffer();
 
             _classMap = new string[NumClasses];
-#if false
-            string fileName = "yamnet_class_map.txt";
-            using (var reader = File.OpenText(fileName))
+            using (var reader = File.OpenText(classMapPath))
             {
                 string line = reader.ReadLine(); // Discard the first line.
                 while ((line = reader.ReadLine()) != null)
@@ -41,17 +39,11 @@ namespace Voice100
                     }
                 }
             }
-#endif
         }
 
         public void AddAudioBytes(byte[] audioBytes, int audioBytesLength)
         {
-            var temp = MemoryMarshal.Cast<byte, short>(audioBytes);
-            var waveform = new float[audioBytesLength / 2];
-            for (int i = 0; i < waveform.Length; i++)
-            {
-                waveform[i] = temp[i] / (float)short.MaxValue;
-            }
+            var waveform = MemoryMarshal.Cast<byte, short>(audioBytes).ToArray();
 
             int waveformOffset = 0;
             while (waveformOffset < waveform.Length)
@@ -96,7 +88,7 @@ namespace Voice100
                             m = s[l, j];
                         }
                     }
-                    Console.WriteLine(k);
+                    Console.WriteLine("YAMNet: {1} {0}", k, _classMap[k]);
                 }
             }
         }

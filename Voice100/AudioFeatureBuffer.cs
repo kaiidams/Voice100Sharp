@@ -14,7 +14,7 @@ namespace Voice100
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
 
-        private readonly float[] _waveformBuffer;
+        private readonly short[] _waveformBuffer;
         private int _waveformCount;
         private readonly float[] _outputBuffer;
         private int _outputCount;
@@ -41,7 +41,7 @@ namespace Voice100
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;
 
-            _waveformBuffer = new float[2 * _stftHopLength + _stftWindowLength];
+            _waveformBuffer = new short[2 * _stftHopLength + _stftWindowLength];
             _waveformCount = 0;
             _outputBuffer = new float[_nMelBands * (_stftWindowLength + _stftHopLength)];
             _outputCount = 0;

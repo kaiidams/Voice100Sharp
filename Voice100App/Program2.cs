@@ -39,11 +39,23 @@ namespace Voice100App
             waveIn.StopRecording();
         }
 
-        private static Task<YAMNetSession> BuildYAMNetAsync(string model)
+        private static async Task<YAMNetSession> BuildYAMNetAsync(string model)
         {
-            string modelPath = Path.Combine(_cacheDirectoryPath, "yamnet.onnx");
-            var yamNetSession = new YAMNetSession(modelPath);
-            return Task.FromResult(yamNetSession);
+            string modelPath;
+            string classMapPath;
+            using (var httpClient = new HttpClient())
+            {
+                var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                modelPath = await downloader.MayDownloadAsync(
+                    "yamnet.onnx",
+                    "https://github.com/kaiidams/YamNetUnityDemo/raw/main/Assets/YamNetUnity/NNModels/yamnet.onnx",
+                    "0AFAEA5521E30D766386DF2AA6AB89E1FFA9E0C0E76E71779A2EB4F95E09941D");
+                classMapPath = await downloader.MayDownloadAsync(
+                    "yamnet_class_map.csv",
+                    "https://github.com/kaiidams/YamNetUnityDemo/raw/main/Assets/YamNetUnity/Resources/yamnet_class_map.csv",
+                    "B03D48F9EBE23F69EA825193DE7E736934086A12410F0AF47BABE897B78BC0D3");
+            }
+            return new YAMNetSession(modelPath, classMapPath);
         }
 
         private static IWaveIn CreateWaveIn()
