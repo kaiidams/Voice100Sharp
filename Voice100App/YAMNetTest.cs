@@ -11,35 +11,27 @@ using Voice100;
 
 namespace Voice100App
 {
-    internal class Program2
+    internal class YAMNetTest : IDisposable
     {
-        static YAMNetSession _yamNetSession;
-        static BufferedWaveProvider _bufferedWaveProvider;
-        static string _cacheDirectoryPath;
-        static WaveOut waveOut;
+        YAMNetSession _yamNetSession;
+        string _cacheDirectoryPath;
 
-        public static async Task InteractiveAsync()
+        public YAMNetTest()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             _cacheDirectoryPath = Path.Combine(appDirPath, "Cache");
+        }
+
+        public async Task RunAsync()
+        {
             _yamNetSession = await BuildYAMNetAsync("yamnet");
-
-            for (int i = 0; i < WaveOut.DeviceCount; i++)
-            {
-                var cap = WaveOut.GetCapabilities(i);
-                Console.WriteLine(cap.ProductName);
-            }
-
-            waveOut = new WaveOut();
-            _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
-            waveOut.Init(_bufferedWaveProvider);
             var waveIn = CreateWaveIn();
             waveIn.StartRecording();
             Console.ReadLine();
             waveIn.StopRecording();
         }
 
-        private static async Task<YAMNetSession> BuildYAMNetAsync(string model)
+        private async Task<YAMNetSession> BuildYAMNetAsync(string model)
         {
             string modelPath;
             string classMapPath;
@@ -58,7 +50,7 @@ namespace Voice100App
             return new YAMNetSession(modelPath, classMapPath);
         }
 
-        private static IWaveIn CreateWaveIn()
+        private IWaveIn CreateWaveIn()
         {
             for (int i = 0; i < WaveIn.DeviceCount; i++)
             {
@@ -76,14 +68,19 @@ namespace Voice100App
             return waveIn;
         }
 
-        private static void OnRecordingStopped(object sender, StoppedEventArgs e)
+        private void OnRecordingStopped(object sender, StoppedEventArgs e)
         {
             Console.WriteLine("stop");
         }
 
-        private static void OnDataAvailable(object sender, WaveInEventArgs e)
+        private void OnDataAvailable(object sender, WaveInEventArgs e)
         {
-            _yamNetSession.AddAudioBytes(e.Buffer, e.BytesRecorded);
+            _yamNetSession.AddAudioBytes(e.Buffer, 0, e.BytesRecorded);
+        }
+
+        public void Dispose()
+        {
+            _yamNetSession.Dispose();
         }
     }
 }

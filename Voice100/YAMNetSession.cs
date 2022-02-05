@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Voice100
 {
-    public class YAMNetSession
+    public class YAMNetSession : IDisposable
     {
         int _sampleIndex;
         float[] _sampleBuffer;
@@ -41,15 +41,20 @@ namespace Voice100
             }
         }
 
-        public void AddAudioBytes(byte[] audioBytes, int audioBytesLength)
+        public void AddAudioBytes(byte[] audioBytes, int audioOffset, int audioBytesLength)
         {
             var waveform = MemoryMarshal.Cast<byte, short>(audioBytes).ToArray();
-
-            int waveformOffset = 0;
-            while (waveformOffset < waveform.Length)
+            int waveformOffset = audioOffset / sizeof(short);
+            int waveformLength = audioBytesLength / sizeof(short);
+            while (waveformLength > 0)
             {
-                int written = _featureBuffer.Write(waveform, waveformOffset, waveform.Length - waveformOffset);
+                int written = _featureBuffer.Write(waveform, waveformOffset, waveformLength);
+                if (written == 0)
+                {
+                    break;
+                }
                 waveformOffset += written;
+                waveformLength -= written;
 
                 while (_featureBuffer.OutputCount >= 96 * 64)
                 {
@@ -88,9 +93,14 @@ namespace Voice100
                             m = s[l, j];
                         }
                     }
-                    Console.WriteLine("YAMNet: {1} {0}", k, _classMap[k]);
+                    Console.WriteLine("YAMNet: {1} ({0})", k, _classMap[k]);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _sess.Dispose();
         }
     }
 }
