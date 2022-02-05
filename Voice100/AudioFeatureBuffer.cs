@@ -13,6 +13,7 @@ namespace Voice100
         private readonly int _stftHopLength;
         private readonly int _stftWindowLength;
         private readonly int _nMelBands;
+        private readonly double _audioScale;
 
         private readonly short[] _waveformBuffer;
         private int _waveformCount;
@@ -40,6 +41,7 @@ namespace Voice100
             _stftHopLength = stftHopLength;
             _stftWindowLength = stftWindowLength;
             _nMelBands = nMelBands;
+            _audioScale = 0.5 / short.MaxValue;
 
             _waveformBuffer = new short[2 * _stftHopLength + _stftWindowLength];
             _waveformCount = 0;
@@ -65,7 +67,7 @@ namespace Voice100
                 int wavebufferOffset = 0;
                 while (wavebufferOffset + _stftWindowLength < _waveformCount)
                 {
-                    _processor.Process(_waveformBuffer, wavebufferOffset, _outputBuffer, _outputCount);
+                    _processor.Step(_waveformBuffer, wavebufferOffset, _audioScale, _outputBuffer, _outputCount);
                     _outputCount += _nMelBands;
                     wavebufferOffset += _stftHopLength;
                 }
@@ -87,7 +89,7 @@ namespace Voice100
                 {
                     return written;
                 }
-                _processor.Process(waveform, offset + written, _outputBuffer, _outputCount);
+                _processor.Step(waveform, offset + written, _audioScale, _outputBuffer, _outputCount);
                 _outputCount += _nMelBands;
                 written += _stftHopLength;
             }

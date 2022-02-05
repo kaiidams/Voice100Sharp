@@ -130,9 +130,9 @@ namespace Voice100
             return melspec;
         }
 
-        internal void Process(short[] waveform, int waveformOffset, float[] outputBuffer, int outputOffset)
+        internal void Step(short[] waveform, int waveformOffset, double scale, float[] outputBuffer, int outputOffset)
         {
-            MelSpectrogram(waveform, waveformOffset, 1.0 / short.MaxValue, outputBuffer, outputOffset);
+            MelSpectrogram(waveform, waveformOffset, scale, outputBuffer, outputOffset);
         }
 
         private int MaxAbsValue(short[] waveform)

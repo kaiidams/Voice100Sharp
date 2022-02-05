@@ -242,6 +242,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Voice100Test.cs" />
+    <Compile Include="YAMNetTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -14,13 +14,12 @@ Visual Studio, you can open
 `Voice100Sharp\Voice100Sharp.sln`, set `Voice100SharpApp` to the default
 project, and run the program with `F5`.
 
-The program runs in two modes, interactive or test model. Comment out
-one of `TestSpeechRecognitionAsync()` or `await Interactive()` to choose.
+The program runs one of several tests, given by the command argument.
 
-In the interactive mode, it speaks once at the start up and then listens to
+In the `voice100` test, it speaks once at the start up and then listens to
 the microphone and prints the recognized texts.
 
-In the test mode, reads a test file,
+In the `test` test, reads a test file,
 `test_data\transcript.txt` and print predicted results. The format of the output is
 three columns separated by `|`, names of wav files, target texts, predicted texts.
 The test data is from
