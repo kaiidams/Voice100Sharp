@@ -33,13 +33,23 @@ namespace Voice100
         /// <param name="mono"></param>
         /// <param name="waveform">Waveform data.</param>
         /// <returns></returns>
-        public static void WriteWav(string path, int rate, bool mono, short[] waveform)
+        public static void WriteWav(string path, short[] waveform, int rate, bool mono)
         {
             using (var stream = File.OpenWrite(path))
-            using (var writer = new BinaryWriter(stream, Encoding.ASCII))
             {
-                WriteWav(writer, rate, mono, waveform);
+                WriteWav(stream, waveform, rate, mono);
             }
+        }
+
+        public static byte[] GetBytes(short[] waveform, int rate, bool mono)
+        {
+            byte[] data;
+            using (var stream = new MemoryStream())
+            {
+                WriteWav(stream, waveform, rate, mono);
+                data = stream.ToArray();
+            }
+            return data;
         }
 
         private static short[] ReadWav(BinaryReader reader, int rate, bool mono)
@@ -87,7 +97,15 @@ namespace Voice100
             }
         }
 
-        private static void WriteWav(BinaryWriter writer, int rate, bool mono, short[] waveform)
+        private static void WriteWav(Stream stream, short[] waveform, int rate, bool mono)
+        {
+            using (var writer = new BinaryWriter(stream, Encoding.ASCII))
+            {
+                WriteWav(writer, waveform, rate, mono);
+            }
+        }
+
+        private static void WriteWav(BinaryWriter writer, short[] waveform, int rate, bool mono)
         {
             short formatTag = 1; // PCM
             short numChannels = (short)(mono ? 1 : 2);

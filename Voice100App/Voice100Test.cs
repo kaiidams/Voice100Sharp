@@ -163,7 +163,7 @@ namespace Voice100App
         {
             string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
-            WaveFile.WriteWav(outputFilePath, 16000, true, audio);
+            WaveFile.WriteWav(outputFilePath, audio, 16000, true);
             string outputTextPath = Path.Combine(_dataDirectoryPath, $"{dateString}.txt");
             WriteTextFile(outputTextPath, text);
             Console.WriteLine("Recognized: {0}", text);
