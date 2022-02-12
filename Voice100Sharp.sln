@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice100App", "Voice100App\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice100", "Voice100\Voice100.csproj", "{0159E090-808F-42FF-BFBA-C508C9CF253B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Voice100.Interactive", "Voice100.Interactive\Voice100.Interactive.csproj", "{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{0159E090-808F-42FF-BFBA-C508C9CF253B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0159E090-808F-42FF-BFBA-C508C9CF253B}.Release|x64.ActiveCfg = Release|Any CPU
 		{0159E090-808F-42FF-BFBA-C508C9CF253B}.Release|x64.Build.0 = Release|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Debug|x64.Build.0 = Debug|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Release|x64.ActiveCfg = Release|Any CPU
+		{CAED0E33-6612-4BCF-8429-1C3B0716C1B1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
