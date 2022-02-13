@@ -213,7 +213,11 @@ namespace Voice100App
 
         public void Dispose()
         {
-            _speechRecognizerSession.Dispose();
+            if (_speechRecognizerSession != null)
+            {
+                _speechRecognizerSession.Dispose();
+                _speechRecognizerSession = null;
+            }
         }
     }
 }

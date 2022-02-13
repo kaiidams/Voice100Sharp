@@ -106,8 +106,54 @@ namespace Voice100
 
         public virtual float[] Process(short[] waveform)
         {
-            int melspecLength = (waveform.Length - _window.Length) / _hopLength + 1;
-            float[] melspec = new float[_nMelBands * melspecLength];
+            return MelSpectrogram(waveform);
+        }
+
+        public float[] MelSpectrogram(short[] waveform)
+        {
+            double scale = GetScaleFactor(waveform);
+            int outputStep = _nMelBands;
+            int outputLength = GetOutputLength(waveform);
+            float[] output = new float[outputStep * outputLength];
+            int waveformOffset = 0;
+            for (int outputOffset = 0; outputOffset < output.Length; outputOffset += outputStep)
+            {
+                MelSpectrogramStep(waveform, waveformOffset, scale, output, outputOffset);
+                waveformOffset += _hopLength;
+            }
+            if (_postNormalize)
+            {
+                PostNormalize(output, outputStep);
+            }
+            return output;
+        }
+
+        public float[] Spectrogram(short[] waveform)
+        {
+            double scale = GetScaleFactor(waveform);
+            int outputStep = _fftLength / 2 + 1;
+            int outputLength = GetOutputLength(waveform);
+            float[] output = new float[outputStep * outputLength];
+            int waveformOffset = 0;
+            for (int outputOffset = 0; outputOffset < output.Length; outputOffset += outputStep)
+            {
+                SpectrogramStep(waveform, waveformOffset, scale, output, outputOffset, outputStep);
+                waveformOffset += _hopLength;
+            }
+            if (_postNormalize)
+            {
+                PostNormalize(output, outputStep);
+            }
+            return output;
+        }
+
+        private int GetOutputLength(short[] waveform)
+        {
+            return (waveform.Length - _window.Length) / _hopLength + 1;
+        }
+
+        private double GetScaleFactor(short[] waveform)
+        {
             double scale;
             if (_preNormalize > 0)
             {
@@ -117,22 +163,8 @@ namespace Voice100
             {
                 scale = 1.0 / short.MaxValue;
             }
-            int waveformOffset = 0;
-            for (int melspecOffset = 0; melspecOffset < melspec.Length; melspecOffset += _nMelBands)
-            {
-                MelSpectrogram(waveform, waveformOffset, scale, melspec, melspecOffset);
-                waveformOffset += _hopLength;
-            }
-            if (_postNormalize)
-            {
-                PostNormalize(melspec);
-            }
-            return melspec;
-        }
 
-        internal void Step(short[] waveform, int waveformOffset, double scale, float[] outputBuffer, int outputOffset)
-        {
-            MelSpectrogram(waveform, waveformOffset, scale, outputBuffer, outputOffset);
+            return scale;
         }
 
         private int MaxAbsValue(short[] waveform)
@@ -147,41 +179,45 @@ namespace Voice100
             return maxValue;
         }
 
-        protected void Spectrogram(short[] waveform, int waveformOffset, double scale, float[] spec, int specOffset)
-        {
-            ReadFrame(waveform, waveformOffset, scale, _temp1);
-            FFT.CFFT(_temp1, _temp2, _fftLength);
-            ToMagnitude(_temp2, _temp1, _fftLength);
-            int specLength = _fftLength / 2 + 1;
-            for (int i = 0; i < specLength; i++)
-            {
-                float value = (float)(20.0 * Math.Log(_temp2[i] + _logOffset));
-                spec[specOffset + i] = value;
-            }
-        }
-
-        public void MelSpectrogram(short[] waveform, int waveformOffset, double scale, float[] melspec, int melspecOffset)
+        public void SpectrogramStep(short[] waveform, int waveformOffset, double scale, float[] output, int outputOffset, int outputSize)
         {
             ReadFrame(waveform, waveformOffset, scale, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
             ToSquareMagnitude(_temp2, _temp1, _fftLength);
-            ToMelSpec(_temp2, melspec, melspecOffset);
+            ToSpectrogram(_temp2, output, outputOffset, outputSize);
         }
 
-        private void ToMelSpec(double[] spec, float[] melspec, int melspecOffset)
+        public void MelSpectrogramStep(short[] waveform, int waveformOffset, double scale, float[] output, int outputOffset)
+        {
+            ReadFrame(waveform, waveformOffset, scale, _temp1);
+            FFT.CFFT(_temp1, _temp2, _fftLength);
+            ToSquareMagnitude(_temp2, _temp1, _fftLength);
+            ToMelSpectrogram(_temp2, output, outputOffset);
+        }
+
+        private void ToSpectrogram(double[] input, float[] output, int outputOffset, int outputSize)
+        {
+            for (int i = 0; i < outputSize; i++)
+            {
+                double value = Math.Log(input[i] + _logOffset);
+                output[outputOffset + i] = (float)value;
+            }
+        }
+
+        private void ToMelSpectrogram(double[] spec, float[] melspec, int melspecOffset)
         {
             switch (_melType)
             {
                 case MelType.None:
-                    ToMelSpecNone(spec, melspec, melspecOffset);
+                    ToMelSpectrogramNone(spec, melspec, melspecOffset);
                     break;
                 case MelType.Slaney:
-                    ToMelSpecSlaney(spec, melspec, melspecOffset);
+                    ToMelSpectrogramSlaney(spec, melspec, melspecOffset);
                     break;
             }
         }
 
-        private void ToMelSpecNone(double[] spec, float[] melspec, int melspecOffset)
+        private void ToMelSpectrogramNone(double[] spec, float[] melspec, int melspecOffset)
         {
             for (int i = 0; i < _nMelBands; i++)
             {
@@ -212,7 +248,7 @@ namespace Voice100
             }
         }
 
-        private void ToMelSpecSlaney(double[] spec, float[] melspec, int melspecOffset)
+        private void ToMelSpectrogramSlaney(double[] spec, float[] melspec, int melspecOffset)
         {
             for (int i = 0; i < _nMelBands; i++)
             {
@@ -294,7 +330,7 @@ namespace Voice100
             }
         }
 
-        static void ToMagnitude(double[] xr, double[] xi, int length)
+        private static void ToMagnitude(double[] xr, double[] xi, int length)
         {
             for (int i = 0; i < length; i++)
             {
@@ -302,7 +338,7 @@ namespace Voice100
             }
         }
 
-        protected static void ToSquareMagnitude(double[] xr, double[] xi, int length)
+        private static void ToSquareMagnitude(double[] xr, double[] xi, int length)
         {
             for (int i = 0; i < length; i++)
             {
@@ -310,22 +346,22 @@ namespace Voice100
             }
         }
 
-        private void PostNormalize(float[] melspec)
+        private void PostNormalize(float[] output, int outputStep)
         {
-            int melspecLength = melspec.Length / _nMelBands;
-            for (int i = 0; i < _nMelBands; i++)
+            int melspecLength = output.Length / outputStep;
+            for (int i = 0; i < outputStep; i++)
             {
                 double sum = 0;
                 for (int j = 0; j < melspecLength; j++)
                 {
-                    double v = melspec[i + _nMelBands * j];
+                    double v = output[i + outputStep * j];
                     sum += v;
                 }
                 float mean = (float)(sum / melspecLength);
                 sum = 0;
                 for (int j = 0; j < melspecLength; j++)
                 {
-                    double v = melspec[i + _nMelBands * j] - mean;
+                    double v = output[i + outputStep * j] - mean;
                     sum += v * v;
                 }
                 double std = Math.Sqrt(sum / melspecLength);
@@ -333,8 +369,8 @@ namespace Voice100
 
                 for (int j = 0; j < melspecLength; j++)
                 {
-                    float v = melspec[i + _nMelBands * j];
-                    melspec[i + _nMelBands * j] = (v - mean) * invStd;
+                    float v = output[i + outputStep * j];
+                    output[i + outputStep * j] = (v - mean) * invStd;
                 }
             }
         }

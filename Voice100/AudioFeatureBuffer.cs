@@ -67,7 +67,7 @@ namespace Voice100
                 int wavebufferOffset = 0;
                 while (wavebufferOffset + _stftWindowLength < _waveformCount)
                 {
-                    _processor.Step(_waveformBuffer, wavebufferOffset, _audioScale, _outputBuffer, _outputCount);
+                    _processor.MelSpectrogramStep(_waveformBuffer, wavebufferOffset, _audioScale, _outputBuffer, _outputCount);
                     _outputCount += _nMelBands;
                     wavebufferOffset += _stftHopLength;
                 }
@@ -89,7 +89,7 @@ namespace Voice100
                 {
                     return written;
                 }
-                _processor.Step(waveform, offset + written, _audioScale, _outputBuffer, _outputCount);
+                _processor.MelSpectrogramStep(waveform, offset + written, _audioScale, _outputBuffer, _outputCount);
                 _outputCount += _nMelBands;
                 written += _stftHopLength;
             }
