@@ -13,7 +13,7 @@ namespace Voice100.Tests
         private static float[] ReadData(string file)
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string path = Path.Combine(appDirPath, file);
+            string path = Path.Combine(appDirPath, "Data", file);
             var bytes = File.ReadAllBytes(path);
             return MemoryMarshal.Cast<byte, float>(bytes).ToArray();
         }
@@ -37,7 +37,7 @@ namespace Voice100.Tests
         public Voice100Test()
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string waveFile = Path.Combine(appDirPath, SampleWAVSpeechFile);
+            string waveFile = Path.Combine(appDirPath, "Data", SampleWAVSpeechFile);
             waveform = WaveFile.ReadWav(waveFile, 16000, true);
             processor = new AudioProcessor(
                 sampleRate: 16000,

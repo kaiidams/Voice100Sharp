@@ -20,13 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="61-70968-0000.wav">
+    <None Update="Data\61-70968-0000.wav">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="melspectrogram.bin">
+    <None Update="Data\melspectrogram.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="spectrogram.bin">
+    <None Update="Data\spectrogram.bin">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
