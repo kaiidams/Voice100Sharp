@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 namespace Voice100.Tests
 {
     [TestClass]
-    public class CFFTTest
+    public class FFTTest
     {
         private static void CFFTRef(double[] xr, double[] xi, int N)
         {
@@ -31,11 +31,24 @@ namespace Voice100.Tests
             }
         }
 
+        private static double MSE(double[] a, double[] b)
+        {
+            if (a.Length != b.Length) throw new ArgumentException();
+            int len = Math.Min(a.Length, b.Length);
+            double err = 0.0;
+            for (int i = 0; i < len; i++)
+            {
+                double diff = a[i] - b[i];
+                err += diff * diff;
+            }
+            return err / len;
+        }
+
         [TestMethod]
-        public void TestSpectrogram()
+        public void TestCFFT()
         {
             var rng = new Random();
-            for (int N = 256; N <= 512; N *= 2)
+            for (int N = 256; N <= 2048; N *= 2)
             {
                 var xr0 = new double[N];
                 var xi0 = new double[N];
@@ -52,11 +65,10 @@ namespace Voice100.Tests
                     }
                     CFFTRef(xr0, xi0, N);
                     FFT.CFFT(xr1, xi1, N);
-                    for (int j = 0; j < N; j++)
-                    {
-                        Assert.IsTrue(Math.Abs(xr0[j] - xi1[j]) < 1e-10);
-                        Assert.IsTrue(Math.Abs(xi0[j] - xr1[j]) < 1e-10);
-                    }
+                    double error = MSE(xr0, xi1);
+                    Assert.IsTrue(error < 1e-20);
+                    error = MSE(xi0, xr1);
+                    Assert.IsTrue(error < 1e-20);
                 }
             }
         }
