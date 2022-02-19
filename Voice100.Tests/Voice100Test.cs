@@ -1,6 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Voice100.Tests
@@ -19,6 +21,19 @@ namespace Voice100.Tests
         }
 
         private static double MSE(float[] a, float[] b)
+        {
+            if (a.Length != b.Length) throw new ArgumentException();
+            int len = Math.Min(a.Length, b.Length);
+            double err = 0.0;
+            for (int i = 0; i < len; i++)
+            {
+                double diff = a[i] - b[i];
+                err += diff * diff;
+            }
+            return err / len;
+        }
+
+        private static double MSE(double[] a, double[] b)
         {
             if (a.Length != b.Length) throw new ArgumentException();
             int len = Math.Min(a.Length, b.Length);
@@ -71,12 +86,74 @@ namespace Voice100.Tests
             AssertMSE("melspectrogram.bin", x);
         }
 
-        private void AssertMSE(string path, float[] x)
+        [TestMethod]
+        public void TestReadFrame()
+        {
+            int windowLength = 5;
+            int fftLength = 9;
+            var processor = new AudioProcessor(
+                windowLength: windowLength,
+                fftLength: fftLength,
+                preemph: 0.0);
+
+            MethodInfo methodInfo1 = typeof(AudioProcessor).GetMethod(
+                "ReadFrameCenter", BindingFlags.NonPublic | BindingFlags.Instance);
+            MethodInfo methodInfo2 = typeof(AudioProcessor).GetMethod(
+                "ReadFrameCenterPreemphasis", BindingFlags.NonPublic | BindingFlags.Instance);
+
+            var rng = new Random();
+            short[] waveform = new short[1200];
+            double[] frame1 = new double[fftLength];
+            double[] frame2 = new double[fftLength];
+            for (int i = 0; i < waveform.Length; i++) waveform[i] = (short)rng.Next(short.MinValue, short.MaxValue);
+#if true
+            for (int i = 0; i < 100; i++)
+            {
+                int offset = rng.Next(waveform.Length);
+                double scale = rng.NextDouble();
+                object[] parameters1 = { waveform, offset, scale, frame1 };
+                methodInfo1.Invoke(processor, parameters1);
+                object[] parameters2 = { waveform, offset, scale, frame2 };
+                methodInfo2.Invoke(processor, parameters2);
+                double error = MSE(frame1, frame2);
+                Assert.IsTrue(error == 0);
+            }
+#else
+            for (int j = 0; j < 5; j++)
+            {
+                var stopWatch = new Stopwatch();
+                stopWatch.Start();
+                for (int i = 0; i < 1000000; i++)
+                {
+                    int offset = rng.Next(waveform.Length);
+                    double scale = rng.NextDouble();
+                    object[] parameters1 = { waveform, offset, scale, frame1 };
+                    methodInfo1.Invoke(processor, parameters1);
+                }
+                stopWatch.Stop();
+                Console.WriteLine(stopWatch.Elapsed);
+
+                stopWatch = new Stopwatch();
+                stopWatch.Start();
+                for (int i = 0; i < 1000000; i++)
+                {
+                    int offset = rng.Next(waveform.Length);
+                    double scale = rng.NextDouble();
+                    object[] parameters2 = { waveform, offset, scale, frame1 };
+                    methodInfo2.Invoke(processor, parameters2);
+                }
+                stopWatch.Stop();
+                Console.WriteLine(stopWatch.Elapsed);
+            }
+#endif
+        }
+
+        private void AssertMSE(string path, float[] x, double threshold = 1e-3)
         {
             var truth = ReadData(path);
             double mse = MSE(truth, x);
             Console.WriteLine("MSE: {0}", mse);
-            Assert.IsTrue(mse < 1e-3);
+            Assert.IsTrue(mse < threshold);
         }
     }
 }

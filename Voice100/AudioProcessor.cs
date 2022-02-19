@@ -289,7 +289,8 @@ namespace Voice100
                 case WindowType.Preemph:
                     throw new NotImplementedException();
                 case WindowType.Center:
-                    throw new NotImplementedException();
+                    ReadFrameCenter(waveform, offset, scale, frame);
+                    break;
                 case WindowType.CenterPreemph:
                     ReadFrameCenterPreemphasis(waveform, offset, scale, frame);
                     break;
@@ -308,25 +309,45 @@ namespace Voice100
             }
         }
 
+        private void ReadFrameCenter(short[] waveform, int offset, double scale, double[] frame)
+        {
+            int frameOffset = (frame.Length - 1) / 2 - (_window.Length - 1) / 2;
+            for (int i = 0; i < frameOffset; i++)
+            {
+                frame[i] = 0;
+            }
+            int waveformOffset = offset - (_window.Length - 1) / 2;
+            for (int i = 0; i < _window.Length; i++)
+            {
+                int k = i + waveformOffset;
+                double v = (k >= 0 && k < waveform.Length) ? waveform[k] : 0;
+                frame[i + frameOffset] = scale * v * _window[i];
+            }
+            for (int i = frameOffset + _window.Length; i < frame.Length; i++)
+            {
+                frame[i] = 0;
+            }
+        }
+
         private void ReadFrameCenterPreemphasis(short[] waveform, int offset, double scale, double[] frame)
         {
-            int winOffset = (_window.Length - frame.Length) / 2;
-            int waveformOffset = offset - frame.Length / 2;
-            for (int i = 0; i < frame.Length; i++)
+            int frameOffset = (frame.Length - 1) / 2 - (_window.Length - 1) / 2;
+            for (int i = 0; i < frameOffset; i++)
             {
-                int j = i + winOffset;
-                if (j >= 0 && j < _window.Length)
-                {
-                    int k = i + waveformOffset;
-                    double v = (k >= 0 && k < waveform.Length) ? waveform[k] : 0;
-                    k--;
-                    if (k >= 0 && k < waveform.Length) v -= _preemph * waveform[k];
-                    frame[i] = scale * v * _window[j];
-                }
-                else
-                {
-                    frame[i] = 0;
-                }
+                frame[i] = 0;
+            }
+            int waveformOffset = offset - (_window.Length - 1) / 2;
+            for (int i = 0; i < _window.Length; i++)
+            {
+                int k = i + waveformOffset;
+                double v = (k >= 0 && k < waveform.Length) ? waveform[k] : 0;
+                k--;
+                if (k >= 0 && k < waveform.Length) v -= _preemph * waveform[k];
+                frame[i + frameOffset] = scale * v * _window[i];
+            }
+            for (int i = frameOffset + _window.Length; i < frame.Length; i++)
+            {
+                frame[i] = 0;
             }
         }
 
