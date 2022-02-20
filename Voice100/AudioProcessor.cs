@@ -61,6 +61,7 @@ namespace Voice100
         private readonly MelType _melType;
         protected readonly double _sampleRate;
         private readonly double _logOffset;
+        private bool _logOutput;
 
         public AudioProcessor(
             int sampleRate = 16000,
@@ -76,6 +77,7 @@ namespace Voice100
             double melMaxHz = 0.0,
             bool htk = false,
             string melNormalize = "slaney",
+            bool logOutput = true,
             double logOffset = 1e-6,
             bool postNormalize = false,
             double postNormalizeOffset = 1e-5)
@@ -99,6 +101,7 @@ namespace Voice100
             _temp2 = new double[fftLength];
             _fftLength = fftLength;
             _nMelBands = nMelBands;
+            _logOutput = logOutput;
             _logOffset = logOffset;
             _postNormalize = postNormalize;
             _postNormalizeOffset = postNormalizeOffset;
@@ -197,15 +200,26 @@ namespace Voice100
 
         private void ToSpectrogram(double[] input, float[] output, int outputOffset, int outputSize)
         {
-            for (int i = 0; i < outputSize; i++)
+            if (_logOutput)
             {
-                double value = Math.Log(input[i] + _logOffset);
-                output[outputOffset + i] = (float)value;
+                for (int i = 0; i < outputSize; i++)
+                {
+                    double value = Math.Log(input[i] + _logOffset);
+                    output[outputOffset + i] = (float)value;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < outputSize; i++)
+                {
+                    output[outputOffset + i] = (float)input[i];
+                }
             }
         }
 
         private void ToMelSpectrogram(double[] spec, float[] melspec, int melspecOffset)
         {
+            if (!_logOutput) throw new NotImplementedException();
             switch (_melType)
             {
                 case MelType.None:
