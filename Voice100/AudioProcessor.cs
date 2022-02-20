@@ -46,12 +46,11 @@ namespace Voice100
             }
         }
 
+        protected readonly double _sampleRate;
         protected readonly double[] _window;
         private readonly WindowType _windowType;
         protected readonly int _hopLength;
         private readonly double _preNormalize;
-        private readonly bool _postNormalize;
-        private readonly double _postNormalizeOffset;
         protected readonly double _preemph;
         protected readonly double[] _melBands;
         protected readonly double[] _temp1;
@@ -59,9 +58,11 @@ namespace Voice100
         protected readonly int _fftLength;
         protected readonly int _nMelBands;
         private readonly MelType _melType;
-        protected readonly double _sampleRate;
+        private readonly int _power;
         private readonly double _logOffset;
-        private bool _logOutput;
+        private readonly bool _logOutput;
+        private readonly bool _postNormalize;
+        private readonly double _postNormalizeOffset;
 
         public AudioProcessor(
             int sampleRate = 16000,
@@ -77,6 +78,7 @@ namespace Voice100
             double melMaxHz = 0.0,
             bool htk = false,
             string melNormalize = "slaney",
+            int power = 2,
             bool logOutput = true,
             double logOffset = 1e-6,
             bool postNormalize = false,
@@ -101,6 +103,7 @@ namespace Voice100
             _temp2 = new double[fftLength];
             _fftLength = fftLength;
             _nMelBands = nMelBands;
+            _power = power;
             _logOutput = logOutput;
             _logOffset = logOffset;
             _postNormalize = postNormalize;
@@ -186,7 +189,7 @@ namespace Voice100
         {
             ReadFrame(waveform, waveformOffset, scale, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
-            ToSquareMagnitude(_temp2, _temp1, _fftLength);
+            ToMagnitude(_temp2, _temp1, _fftLength);
             ToSpectrogram(_temp2, output, outputOffset, outputSize);
         }
 
@@ -194,7 +197,7 @@ namespace Voice100
         {
             ReadFrame(waveform, waveformOffset, scale, _temp1);
             FFT.CFFT(_temp1, _temp2, _fftLength);
-            ToSquareMagnitude(_temp2, _temp1, _fftLength);
+            ToMagnitude(_temp2, _temp1, _fftLength);
             ToMelSpectrogram(_temp2, output, outputOffset);
         }
 
@@ -365,7 +368,23 @@ namespace Voice100
             }
         }
 
-        private static void ToMagnitude(double[] xr, double[] xi, int length)
+        private void ToMagnitude(double[] xr, double[] xi, int length)
+        {
+            if (_power == 2)
+            {
+                ToSquareMagnitude(xr, xi, length);
+            }
+            else if (_power == 1)
+            {
+                ToAbsoluteMagnitude(xr, xi, length);
+            }
+            else
+            {
+                throw new NotImplementedException("power must be 1 or 2.");
+            }
+        }
+
+        private static void ToAbsoluteMagnitude(double[] xr, double[] xi, int length)
         {
             for (int i = 0; i < length; i++)
             {
