@@ -22,7 +22,7 @@ namespace Voice100.Interactive
 
         public string GetDataUrl()
         {
-            byte[] bytes = WaveFile.GetBytes(_waveform, _rate, true);
+            byte[] bytes = WaveFile.GetWAVBytes(_waveform, _rate);
             return GetDataURL(MimeType, bytes);
         }
     }

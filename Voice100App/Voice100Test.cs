@@ -163,7 +163,7 @@ namespace Voice100App
         {
             string dateString = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
             string outputFilePath = Path.Combine(_dataDirectoryPath, $"{dateString}.wav");
-            WaveFile.WriteWav(outputFilePath, audio, 16000, true);
+            WaveFile.WriteWAV(outputFilePath, audio, 16000);
             string outputTextPath = Path.Combine(_dataDirectoryPath, $"{dateString}.txt");
             WriteTextFile(outputTextPath, text);
             Console.WriteLine("Recognized: {0}", text);
@@ -204,7 +204,7 @@ namespace Voice100App
                     string name = parts[0];
                     string targetText = parts[1];
                     string waveFile = Path.Combine(inputDirPath, name);
-                    var waveform = WaveFile.ReadWav(waveFile, 16000, true);
+                    var waveform = WaveFile.ReadWAV(waveFile, 16000);
                     string predictText = recognizer.Recognize(waveform);
                     Console.WriteLine("{0}|{1}|{2}", name, targetText, predictText);
                 }

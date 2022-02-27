@@ -10,7 +10,8 @@ namespace Voice100.Tests
     [TestClass]
     public class Voice100Test
     {
-        public const string SampleWAVSpeechFile = "61-70968-0000.wav";
+        private const int SampleRate = 16000;
+        private const string SampleWAVSpeechFile = "61-70968-0000.wav";
 
         private static float[] ReadData(string file)
         {
@@ -53,9 +54,9 @@ namespace Voice100.Tests
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string waveFile = Path.Combine(appDirPath, "Data", SampleWAVSpeechFile);
-            waveform = WaveFile.ReadWav(waveFile, 16000, true);
+            waveform = WaveFile.ReadWAV(waveFile, SampleRate);
             processor = new AudioProcessor(
-                sampleRate: 16000,
+                sampleRate: SampleRate,
                 window: "hann",
                 windowLength: 400,
                 hopLength: 160,
