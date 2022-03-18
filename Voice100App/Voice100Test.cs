@@ -14,6 +14,7 @@ namespace Voice100App
     {
         //const string AsrModel = "QuartzNet15x5Base-En";
         const string AsrModel = "voice100";
+        const string StartText = "Hello, I am a rocket.";
 
         SpeechRecognizerSession _speechRecognizerSession;
         SpeechSynthesizer _speechSynthesizer;
@@ -33,12 +34,12 @@ namespace Voice100App
             Directory.CreateDirectory(_dataDirectoryPath);
         }
 
-        public async Task RunAsync()
+        public async Task RunAsync(bool printOutput, bool useMultiTaskTTS)
         {
             var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
             _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
             _speechRecognizerSession.OnSpeechRecognition += OnSpeechRecognition;
-            _speechSynthesizer = await BuildSpeechSynthesizerAsync();
+            _speechSynthesizer = await BuildSpeechSynthesizerAsync(useMultiTaskTTS);
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
@@ -46,8 +47,25 @@ namespace Voice100App
                 Console.WriteLine(cap.ProductName);
             }
 
-            string alignedText;
-            _speechSynthesizer.Speak("Hello, I am a rocket.", out _waveData, out alignedText);
+            if (printOutput)
+            {
+                if (useMultiTaskTTS)
+                {
+                    string[] phonemes;
+                    _speechSynthesizer.Speak(StartText, out _waveData, out phonemes);
+                    Console.WriteLine("Phonemes: {0}", string.Join("/", phonemes));
+                }
+                else
+                {
+                    string alignedText;
+                    _speechSynthesizer.Speak(StartText, out _waveData, out alignedText);
+                    Console.WriteLine("Aligned text: {0}", alignedText);
+                }
+            }
+            else
+            {
+                _waveData = _speechSynthesizer.Speak(StartText);
+            }
             _waveOut = new WaveOut();
             _bufferedWaveProvider = new BufferedWaveProvider(new WaveFormat(16000, 16, 1));
             _waveOut.Init(_bufferedWaveProvider);
@@ -122,7 +140,7 @@ namespace Voice100App
             return recognizer;
         }
 
-        private async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync()
+        private async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync(bool useMultiTaskTTS)
         {
             string alignModelPath;
             string audioModelPath;
@@ -133,12 +151,22 @@ namespace Voice100App
                     "ttsalign_en_conv_base-20210808.onnx",
                     "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
                     "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
-                audioModelPath = await downloader.MayDownloadAsync(
-                    "ttsaudio_en_conv_base-20220107.onnx",
-                    "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
-                    "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+                if (useMultiTaskTTS)
+                {
+                    audioModelPath = await downloader.MayDownloadAsync(
+                        "ttsaudio_en_mt_conv_base-20220316.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.2.0/ttsaudio_en_mt_conv_base-20220316.onnx",
+                        "5d0f426509bb662deab3ca9cf964f68dbaf2a30b55e653205c98eaad63978468");
+                }
+                else
+                {
+                    audioModelPath = await downloader.MayDownloadAsync(
+                        "ttsaudio_en_conv_base-20220107.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
+                        "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+                }
             }
-            return new SpeechSynthesizer(alignModelPath, audioModelPath);
+            return new SpeechSynthesizer(alignModelPath, audioModelPath, useMultiTaskTTS);
         }
 
         private IWaveIn CreateWaveIn()
