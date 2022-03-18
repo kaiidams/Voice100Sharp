@@ -4,34 +4,38 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace Voice100
 {
     public class SpeechSynthesizer : IDisposable
     {
         private readonly CharTokenizer _encoder;
+        private readonly CMUTokenizer _outputTokenizer;
         private readonly WORLDVocoder _vocoder;
         private InferenceSession _ttsAlignInferSess;
         private InferenceSession _ttsAudioInferSess;
 
-        private SpeechSynthesizer()
+        private SpeechSynthesizer(bool useMultiTask)
         {
             _encoder = new CharTokenizer();
             _vocoder = new WORLDVocoder();
+            if (useMultiTask)
+            {
+                _outputTokenizer = new CMUTokenizer();
+            }
+            else
+            {
+                _outputTokenizer = null;
+            }
         }
 
-        public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel) : this()
+        public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel, bool useMultiTask) : this(useMultiTask)
         {
             _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
             _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
         }
 
-        public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel) : this()
-        {
-            _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
-            _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
-        }
+        public bool UseMultiTask => _outputTokenizer != null;
 
         protected virtual void Dispose(bool disposing)
         {
@@ -58,39 +62,68 @@ namespace Voice100
         public byte[] Speak(string text)
         {
             short[] audio;
-            long[] aligned;
-            Speak(text, out audio, out aligned);
+            Speak(text, out audio);
             return MemoryMarshal.Cast<short, byte>(audio).ToArray();
-        }
-
-        public void Speak(string text, out short[] audio, out string alignedText)
-        {
-            long[] aligned;
-            Speak(text, out audio, out aligned);
-            alignedText = _encoder.Decode(aligned);
         }
 
         public void Speak(string text, out byte[] audio, out string alignedText)
         {
             short[] shortAudio;
-            long[] aligned;
-            Speak(text, out shortAudio, out aligned);
+            Speak(text, out shortAudio, out alignedText);
             audio = MemoryMarshal.Cast<short, byte>(shortAudio).ToArray();
-            alignedText = _encoder.Decode(aligned);
         }
 
-        private void Speak(string text, out short[] audio, out long[] aligned)
+        public void Speak(string text, out byte[] audio, out string[] phonemes)
+        {
+            short[] shortAudio;
+            Speak(text, out shortAudio, out phonemes);
+            audio = MemoryMarshal.Cast<short, byte>(shortAudio).ToArray();
+        }
+
+        private void Speak(string text, out short[] audio)
         {
             long[] encoded = _encoder.Encode(text);
             if (encoded.Length == 0)
             {
-                audio = new short[0];
-                aligned = new long[0];
+                audio = Array.Empty<short>();
             }
             else
             {
-                aligned = Align(encoded);
+                long[] aligned = Align(encoded);
                 audio = Predict(aligned);
+            }
+        }
+
+        private void Speak(string text, out short[] audio, out string aligneText)
+        {
+            long[] encoded = _encoder.Encode(text);
+            if (encoded.Length == 0)
+            {
+                audio = Array.Empty<short>();
+                aligneText = string.Empty;
+            }
+            else
+            {
+                long[] aligned = Align(encoded);
+                audio = Predict(aligned);
+                aligneText = _encoder.Decode(aligned);
+            }
+        }
+
+        private void Speak(string text, out short[] audio, out string[] phonemes)
+        {
+            long[] encoded = _encoder.Encode(text);
+            if (encoded.Length == 0)
+            {
+                audio = Array.Empty<short>();
+                phonemes = Array.Empty<string>();
+            }
+            else
+            {
+                long[] aligned = Align(encoded);
+                long[] output;
+                audio = Predict(aligned, out output);
+                phonemes = _outputTokenizer.Decode(output);
             }
         }
 
@@ -150,6 +183,46 @@ namespace Voice100
                 float[] codeap = outputArray[2].AsTensor<float>().ToArray();
                 return _vocoder.Decode(f0, logspc, codeap);
             }
+        }
+
+        private short[] Predict(long[] aligned, out long[] outputText)
+        {
+            var container = new List<NamedOnnxValue>();
+            var alignedData = new DenseTensor<long>(aligned, new int[2] { 1, aligned.Length });
+            container.Add(NamedOnnxValue.CreateFromTensor("aligntext", alignedData));
+            using (var output = _ttsAudioInferSess.Run(container, new string[] { "f0", "logspc", "codeap", "logits" }))
+            {
+                var outputArray = output.ToArray();
+                float[] f0 = outputArray[0].AsTensor<float>().ToArray();
+                float[] logspc = outputArray[1].AsTensor<float>().ToArray();
+                float[] codeap = outputArray[2].AsTensor<float>().ToArray();
+                float[] logits = outputArray[3].AsTensor<float>().ToArray();
+                outputText = ArgMax(logits);
+                return _vocoder.Decode(f0, logspc, codeap);
+            }
+        }
+
+        private long[] ArgMax(float[] logits)
+        {
+            int vocabSize = _outputTokenizer.VocabSize;
+            int audioLen = logits.Length / vocabSize;
+            long[] encoded = new long[audioLen];
+            for (int i = 0; i < audioLen; i++)
+            {
+                float maxValue = float.MinValue;
+                long maxArg = 0;
+                for (int j = 0; j < vocabSize; j++)
+                {
+                    float value = logits[j * audioLen + i];
+                    if (maxValue < value)
+                    {
+                        maxArg = j;
+                        maxValue = value;
+                    }
+                }
+                encoded[i] = maxArg;
+            }
+            return encoded;
         }
     }
 }

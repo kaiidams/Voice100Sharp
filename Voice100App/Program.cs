@@ -26,7 +26,7 @@ namespace Voice100App
                 case "voice100":
                     using (var test = new Voice100Test())
                     {
-                        await test.RunAsync();
+                        await test.RunAsync(true, true);
                     }
                     break;
                 case "yamnet":
@@ -35,6 +35,8 @@ namespace Voice100App
                         await test.RunAsync();
                     }
                     break;
+                default:
+                    throw new InvalidDataException();
             }
         }
     }
