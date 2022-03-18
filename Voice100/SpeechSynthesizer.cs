@@ -29,6 +29,12 @@ namespace Voice100
             }
         }
 
+        public SpeechSynthesizer(byte[] ttsAlignORTModel, byte[] ttsAudioORTModel, bool useMultiTask) : this(useMultiTask)
+        {
+            _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
+            _ttsAudioInferSess = new InferenceSession(ttsAudioORTModel);
+        }
+
         public SpeechSynthesizer(string ttsAlignORTModel, string ttsAudioORTModel, bool useMultiTask) : this(useMultiTask)
         {
             _ttsAlignInferSess = new InferenceSession(ttsAlignORTModel);
