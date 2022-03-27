@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>Voice100.Native</id>
+    <version>0.1.0</version>
+    <authors>Katsuya Iida</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <!-- <icon>icon.png</icon> -->
+    <projectUrl>https://github.com/kaiidams/Voice100Sharp</projectUrl>
+    <description>Voice100 includes neural TTS/ASR models. Inference of Voice100 is low cost as its models are tiny and only depend on CNN without recursion.</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright (C) 2021 Katsuya Iida. All rights reserved.</copyright>
+    <tags>text-to-speech csharp speech tts speech-synthesis speech-recognition asr onnx</tags>
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+      </group>
+      <group targetFramework="MonoAndroid11.0">
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="lib\monoandroid11.0\_._" target="lib\monoandroid11.0" />
+    <file src="lib\netstandard2.0\_._" target="lib\netstandard2.0" />
+    <file src="..\voice100_native\build\win-x86\Release\voice100_native.dll" target="runtimes\win-x86\native" />
+    <file src="..\voice100_native\build\win-x64\Release\voice100_native.dll" target="runtimes\win-x64\native" />
+    <file src="..\webrtc_vad\build\win-x86\webrtc_vad.dll" target="runtimes\win-x86\native" />
+    <file src="..\webrtc_vad\build\win-x64\webrtc_vad.dll" target="runtimes\win-x64\native" />
+    <file src="voice100_native.aar" target="runtimes\android\native" />
+    <file src="build\android\Voice100.Native.targets" target="build\monoandroid11.0" />
+    <file src="build\netstandard2.0\Voice100.Native.props" target="build\netstandard2.0" />
+  </files>
+</package>
