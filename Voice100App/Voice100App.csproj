@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Voice100.Native.0.1.0\build\netstandard2.0\Voice100.Native.props" Condition="Exists('..\packages\Voice100.Native.0.1.0\build\netstandard2.0\Voice100.Native.props')" />
   <Import Project="..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.props" Condition="Exists('..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -252,16 +253,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="runtimes\win-x64\native\voice100_native.dll">
-      <Link>voice100_native.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="runtimes\win-x64\native\webrtc_vad.dll">
-      <Link>webrtc_vad.dll</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Voice100\Voice100.csproj">
       <Project>{0159e090-808f-42ff-bfba-c508c9cf253b}</Project>
       <Name>Voice100</Name>
@@ -275,6 +266,7 @@
     <Error Condition="!Exists('..\packages\Microsoft.ML.OnnxRuntime.Managed.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.ML.OnnxRuntime.Managed.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets'))" />
     <Error Condition="!Exists('..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.props'))" />
     <Error Condition="!Exists('..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.targets'))" />
+    <Error Condition="!Exists('..\packages\Voice100.Native.0.1.0\build\netstandard2.0\Voice100.Native.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Voice100.Native.0.1.0\build\netstandard2.0\Voice100.Native.props'))" />
   </Target>
   <Import Project="..\packages\Microsoft.ML.OnnxRuntime.Managed.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets" Condition="Exists('..\packages\Microsoft.ML.OnnxRuntime.Managed.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.Managed.targets')" />
   <Import Project="..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.targets" Condition="Exists('..\packages\Microsoft.ML.OnnxRuntime.1.10.0\build\netstandard2.0\Microsoft.ML.OnnxRuntime.targets')" />
