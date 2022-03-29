@@ -2,6 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>$(VersionPrefix)1.2.1</Version>
+    <RepositoryUrl></RepositoryUrl>
+    <PackageTags>text-to-speech csharp speech tts speech-synthesis speech-recognition asr onnx</PackageTags>
+    <Copyright>Copyright (C) 2021 Katsuya Iida. All rights reserved.</Copyright>
+    <Description>Voice100 includes neural TTS/ASR models. Inference of Voice100 is low cost as its models are tiny and only depend on CNN without recursion.</Description>
+    <PackageProjectUrl>https://github.com/kaiidams/Voice100Sharp</PackageProjectUrl>
+    <Authors>Katsuya Iida</Authors>
+    <Company />
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
