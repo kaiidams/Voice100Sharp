@@ -18,7 +18,7 @@ namespace Voice100
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
-        public NeMoSpeechRecognizer(string filePath)
+        private NeMoSpeechRecognizer()
         {
             _nMelBands = 64;
             _processor = new AudioProcessor(
@@ -39,7 +39,16 @@ namespace Voice100
                 postNormalize: true,
                 postNormalizeOffset: 1e-5);
             _tokenizer = new CharTokenizer(Vocabulary);
-            _inferSess = new InferenceSession(filePath);
+        }
+
+        public NeMoSpeechRecognizer(string modelPath)
+        {
+            _inferSess = new InferenceSession(modelPath);
+        }
+
+        public NeMoSpeechRecognizer(byte[] model)
+        {
+            _inferSess = new InferenceSession(model);
         }
 
         public void Dispose()

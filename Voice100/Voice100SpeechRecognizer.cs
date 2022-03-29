@@ -14,7 +14,7 @@ namespace Voice100
         private readonly InferenceSession _inferSess;
         private readonly int _nMelBands;
 
-        public Voice100SpeechRecognizer(string filePath)
+        private Voice100SpeechRecognizer()
         {
             _nMelBands = 64;
             _processor = new AudioProcessor(
@@ -34,7 +34,16 @@ namespace Voice100
                 logOffset: 1e-6,
                 postNormalize: false);
             _tokenizer = new CharTokenizer();
-            _inferSess = new InferenceSession(filePath);
+        }
+
+        public Voice100SpeechRecognizer(string modelPath) : this()
+        {
+            _inferSess = new InferenceSession(modelPath);
+        }
+
+        public Voice100SpeechRecognizer(byte[] model) : this()
+        {
+            _inferSess = new InferenceSession(model);
         }
 
         public void Dispose()
