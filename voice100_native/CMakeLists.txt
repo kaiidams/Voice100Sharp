@@ -12,3 +12,4 @@ add_library(
     vocoder.cpp)
 
 target_link_libraries(voice100_native ${WORLD_LIB}/Release/world.lib)
+# target_link_libraries(voice100_native ${WORLD_LIB}/libWORLD.so)

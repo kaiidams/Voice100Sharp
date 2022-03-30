@@ -9,7 +9,7 @@
 #define VOICE100_EXPORT __declspec(dllexport)
 #define VOICE100_API __cdecl
 #endif
-#ifdef GCC
+#ifdef __GNUC__
 #define VOICE100_EXPORT __attribute__((visibility("default")))
 #define VOICE100_API
 #endif
