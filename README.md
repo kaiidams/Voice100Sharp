@@ -1,5 +1,7 @@
 # Voice100 for C#
 
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kaiidams/Voice100Sharp/develop)
+
 ## Quick start
 
 Clone the repository. Make sure to enable
@@ -126,4 +128,3 @@ cmake .. -A x64 -B win-x64 ^
     -D WORLD_LIB=%WORLD_DIR%\build\x86_64-windows
 cmake --build win-x64 --config Release
 ```
-
