@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Voice100.Native</id>
-    <version>0.2.0</version>
+    <version>0.3.0</version>
     <authors>Katsuya Iida</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>

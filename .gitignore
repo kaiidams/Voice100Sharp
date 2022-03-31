@@ -351,3 +351,5 @@ MigrationBackup/
 
 # ONNX file
 *.onnx
+
+.ipynb_checkpoints

@@ -11,5 +11,8 @@ add_library(
     SHARED
     vocoder.cpp)
 
-target_link_libraries(voice100_native ${WORLD_LIB}/Release/world.lib)
-# target_link_libraries(voice100_native ${WORLD_LIB}/libWORLD.so)
+if(WIN32)    
+    target_link_libraries(voice100_native ${WORLD_LIB}/Release/world.lib)
+else(WIN32)
+    target_link_libraries(voice100_native ${WORLD_LIB}/libworld.a)
+endif(WIN32)
