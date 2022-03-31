@@ -1,6 +1,6 @@
 # Voice100 for C#
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kaiidams/Voice100Sharp/develop)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kaiidams/Voice100Sharp/main)
 
 ## Quick start
 
