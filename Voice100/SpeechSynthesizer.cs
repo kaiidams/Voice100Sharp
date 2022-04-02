@@ -100,7 +100,7 @@ namespace Voice100
             }
         }
 
-        private void Speak(string text, out short[] audio, out string aligneText)
+        public void Speak(string text, out short[] audio, out string aligneText)
         {
             long[] encoded = _encoder.Encode(text);
             if (encoded.Length == 0)
@@ -116,7 +116,7 @@ namespace Voice100
             }
         }
 
-        private void Speak(string text, out short[] audio, out string[] phonemes)
+        public void Speak(string text, out short[] audio, out string[] phonemes)
         {
             long[] encoded = _encoder.Encode(text);
             if (encoded.Length == 0)
@@ -142,10 +142,12 @@ namespace Voice100
             {
                 var logAlign = res.First().AsTensor<float>();
                 var align = new double[logAlign.Dimensions[1], 2];
-                for (int i = 0; i < align.GetLength(0); i++)
+                for (int i = 0; i < align.GetLength(1); i++)
                 {
-                    align[i, 0] = Math.Exp(Math.Max(0, logAlign[0, i, 0])) - 1;
-                    align[i, 1] = Math.Exp(Math.Max(0, logAlign[0, i, 1])) - 1;
+                    for (int j = 0; j < align.GetLength(0); j++)
+                    {
+                        align[j, i] = Math.Exp(Math.Max(0, logAlign[0, j, i])) - 1;
+                    }
                 }
                 return MakeAlignText(encoded, align);
             }
