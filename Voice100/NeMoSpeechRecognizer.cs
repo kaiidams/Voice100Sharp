@@ -41,12 +41,12 @@ namespace Voice100
             _tokenizer = new CharTokenizer(Vocabulary);
         }
 
-        public NeMoSpeechRecognizer(string modelPath)
+        public NeMoSpeechRecognizer(string modelPath) : this()
         {
             _inferSess = new InferenceSession(modelPath);
         }
 
-        public NeMoSpeechRecognizer(byte[] model)
+        public NeMoSpeechRecognizer(byte[] model) : this()
         {
             _inferSess = new InferenceSession(model);
         }
