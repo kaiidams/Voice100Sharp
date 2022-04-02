@@ -2,7 +2,7 @@ name: MSBuild
 
 on:
   push:
-    branches: [ build ]
+    branches: [ main ]
     paths:
     - '**.cs'
     - '**.csproj'
