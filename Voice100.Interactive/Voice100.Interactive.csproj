@@ -7,7 +7,7 @@
 	<IncludeBuildOutput>true</IncludeBuildOutput>
 	<IsPackable>true</IsPackable>
 	<PackageProjectUrl>https://github.com/kaiidams/Voice100Sharp</PackageProjectUrl>
-	<Version>0.2.2-dev</Version>
+	<Version>0.2.3-dev</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,9 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.21357.1" />
-    <PackageReference Include="Microsoft.DotNet.Interactive.CSharp" Version="1.0.0-beta.21357.1" />
-    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21357.1" />
+    <PackageReference Include="Microsoft.DotNet.Interactive" Version="[1.0.0-beta.21357.1,]" />
+    <PackageReference Include="Microsoft.DotNet.Interactive.CSharp" Version="[1.0.0-beta.21357.1,]" />
+    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="[1.0.0-beta.21357.1,]" />
   </ItemGroup>
 
   <ItemGroup>
