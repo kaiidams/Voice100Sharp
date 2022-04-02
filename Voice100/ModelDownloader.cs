@@ -96,12 +96,18 @@ namespace Voice100
                 {
                     using (var writer = File.OpenWrite(path))
                     {
+                        var lastDateTime = DateTime.UtcNow;
                         byte[] buffer = new byte[4096];
                         int bytesRead;
                         while ((bytesRead = await reader.ReadAsync(buffer, 0, buffer.Length)) != 0)
                         {
                             await writer.WriteAsync(buffer, 0, bytesRead);
-                            ShowProgress(reader.Position, contentLength);
+                            var currentDateTime = DateTime.UtcNow;
+                            if ((lastDateTime - currentDateTime).Seconds >= 1)
+                            {
+                                lastDateTime = currentDateTime;
+                                ShowProgress(reader.Position, contentLength);
+                            }
                         }
                     }
                 }
