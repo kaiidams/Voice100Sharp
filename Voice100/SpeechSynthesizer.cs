@@ -100,7 +100,7 @@ namespace Voice100
             }
         }
 
-        private void Speak(string text, out short[] audio, out string aligneText)
+        public void Speak(string text, out short[] audio, out string aligneText)
         {
             long[] encoded = _encoder.Encode(text);
             if (encoded.Length == 0)
@@ -116,7 +116,7 @@ namespace Voice100
             }
         }
 
-        private void Speak(string text, out short[] audio, out string[] phonemes)
+        public void Speak(string text, out short[] audio, out string[] phonemes)
         {
             long[] encoded = _encoder.Encode(text);
             if (encoded.Length == 0)
