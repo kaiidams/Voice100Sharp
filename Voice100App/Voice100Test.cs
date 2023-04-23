@@ -12,9 +12,7 @@ namespace Voice100App
 {
     internal class Voice100Test : IDisposable
     {
-        //const string AsrModel = "QuartzNet15x5Base-En";
-        const string AsrModel = "voice100";
-        const string StartText = "Hello, I am a rocket.";
+        const string StartText = "Hello! I am a rocket.";
 
         SpeechRecognizerSession _speechRecognizerSession;
         SpeechSynthesizer _speechSynthesizer;
@@ -34,12 +32,12 @@ namespace Voice100App
             Directory.CreateDirectory(_dataDirectoryPath);
         }
 
-        public async Task RunAsync(bool printOutput, bool useMultiTaskTTS)
+        public async Task RunAsync(bool printOutput, string asrModel, string ttsModel)
         {
-            var recognizer = await BuildSpeechRecognizerAsync(AsrModel);
+            var recognizer = await BuildSpeechRecognizerAsync(asrModel);
             _speechRecognizerSession = new SpeechRecognizerSession(recognizer);
             _speechRecognizerSession.OnSpeechRecognition += OnSpeechRecognition;
-            _speechSynthesizer = await BuildSpeechSynthesizerAsync(useMultiTaskTTS);
+            _speechSynthesizer = await BuildSpeechSynthesizerAsync(ttsModel);
 
             for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
@@ -49,7 +47,7 @@ namespace Voice100App
 
             if (printOutput)
             {
-                if (useMultiTaskTTS)
+                if (ttsModel == "voice100_mt")
                 {
                     string[] phonemes;
                     _speechSynthesizer.Speak(StartText, out _waveData, out phonemes);
@@ -106,7 +104,20 @@ namespace Voice100App
         {
             ISpeechRecognizer recognizer;
 
-            if (model == "voice100")
+            if (model == "voice100_v2")
+            {
+                string modelPath;
+                using (var httpClient = new HttpClient())
+                {
+                    var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
+                    modelPath = await downloader.MayDownloadAsync(
+                        "asr_en_base-20230319.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.4.0/asr_en_base-20230319.onnx",
+                        "6a284dbcdf88091faac962f6741b434d4c93c0d5a7f8085ad85198247fad25bc");
+                }
+                recognizer = new Voice100SpeechRecognizer(modelPath, "voice100_v2");
+            }
+            else if (model == "voice100")
             {
                 string modelPath;
                 using (var httpClient = new HttpClient())
@@ -117,7 +128,7 @@ namespace Voice100App
                         "https://github.com/kaiidams/voice100-runtime/releases/download/v1.1.1/asr_en_conv_base_ctc-20220126.onnx",
                         "92801E1E4927F345522706A553E86EEBD1E347651620FC6D69BFA30AB4104B86");
                 }
-                recognizer = new Voice100SpeechRecognizer(modelPath);
+                recognizer = new Voice100SpeechRecognizer(modelPath, "voice100_v1");
             }
             else if (model == "QuartzNet15x5Base-En")
             {
@@ -140,19 +151,41 @@ namespace Voice100App
             return recognizer;
         }
 
-        private async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync(bool useMultiTaskTTS)
+        private async Task<SpeechSynthesizer> BuildSpeechSynthesizerAsync(string modelType)
         {
             string alignModelPath;
             string audioModelPath;
             using (var httpClient = new HttpClient())
             {
                 var downloader = new ModelDownloader(httpClient, _cacheDirectoryPath);
-                alignModelPath = await downloader.MayDownloadAsync(
-                    "ttsalign_en_conv_base-20210808.onnx",
-                    "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
-                    "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
-                if (useMultiTaskTTS)
+                if (modelType == "voice100_v2")
                 {
+                    alignModelPath = await downloader.MayDownloadAsync(
+                        "align_en_base-20230401.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.4.0/align_en_base-20230401.onnx",
+                        "BFE28201EBEBF5476518F3283B0471682D5F7F0E486FEE288EDD70219BA21E78");
+                    audioModelPath = await downloader.MayDownloadAsync(
+                        "tts_en_base-20230407.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.4.0/tts_en_base-20230407.onnx",
+                        "0DB072E76BC54A91A277B7D301083A59AE32CDEC5ADD77AEB47CB192CE2B244D");
+                }
+                else if (modelType == "voice100")
+                {
+                    alignModelPath = await downloader.MayDownloadAsync(
+                        "ttsalign_en_conv_base-20210808.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
+                        "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
+                    audioModelPath = await downloader.MayDownloadAsync(
+                        "ttsaudio_en_conv_base-20220107.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
+                        "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+                }
+                else if (modelType == "voice100_mt")
+                {
+                    alignModelPath = await downloader.MayDownloadAsync(
+                        "ttsalign_en_conv_base-20210808.onnx",
+                        "https://github.com/kaiidams/voice100-runtime/releases/download/v0.1/ttsalign_en_conv_base-20210808.onnx",
+                        "D87B80B2C9CC96AC7A4C89C979C62FA3C18BACB381C3C1A3F624A33496DD1FC8");
                     audioModelPath = await downloader.MayDownloadAsync(
                         "ttsaudio_en_mt_conv_base-20220316.onnx",
                         "https://github.com/kaiidams/voice100-runtime/releases/download/v1.2.0/ttsaudio_en_mt_conv_base-20220316.onnx",
@@ -160,13 +193,10 @@ namespace Voice100App
                 }
                 else
                 {
-                    audioModelPath = await downloader.MayDownloadAsync(
-                        "ttsaudio_en_conv_base-20220107.onnx",
-                        "https://github.com/kaiidams/voice100-runtime/releases/download/v1.0.1/ttsaudio_en_conv_base-20220107.onnx",
-                        "A20FEC366D1A4856006BBF7CFAC7D989EF02B0C1AF676C0B5E6F318751325A2F");
+                    throw new ArgumentException();
                 }
             }
-            return new SpeechSynthesizer(alignModelPath, audioModelPath, useMultiTaskTTS);
+            return new SpeechSynthesizer(alignModelPath, audioModelPath, modelType);
         }
 
         private IWaveIn CreateWaveIn()
@@ -216,13 +246,13 @@ namespace Voice100App
             _speechRecognizerSession.AddAudioBytes(e.Buffer, e.BytesRecorded);
         }
 
-        public async Task TestAsync()
+        public async Task TestAsync(string asrModel)
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
             string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
             string inputPath = Path.Combine(inputDirPath, "transcript.txt");
 
-            using (var recognizer = await BuildSpeechRecognizerAsync(AsrModel))
+            using (var recognizer = await BuildSpeechRecognizerAsync(asrModel))
             using (var reader = File.OpenText(inputPath))
             {
                 string line;
