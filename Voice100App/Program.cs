@@ -20,13 +20,17 @@ namespace Voice100App
                 case "test":
                     using (var test = new Voice100Test())
                     {
-                        await test.TestAsync();
+                        const string AsrModel = "voice100_v2";
+                        await test.TestAsync(AsrModel);
                     }
                     break;
                 case "voice100":
                     using (var test = new Voice100Test())
                     {
-                        await test.RunAsync(true, true);
+                        //const string AsrModel = "QuartzNet15x5Base-En";
+                        const string AsrModel = "voice100_v2";
+                        const string TtsModel = "voice100_v2";
+                        await test.RunAsync(true, AsrModel, TtsModel);
                     }
                     break;
                 case "yamnet":
