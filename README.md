@@ -106,7 +106,19 @@ Build [WORLD](http://www.kisc.meiji.ac.jp/~mmorise/world/english) outside this r
 ```s
 git clone https://github.com/mmorise/World.git
 md World\build
-md World\build
+cd World\build
+cmake .. -A Win32 -B x86-windows
+cmake --build x86-windows --config Release
+cmake .. -A x64 -B x86_64-windows
+cmake --build x86_64-windows --config Release
+```
+
+### Build WORLD for Android
+
+```s
+git clone https://github.com/mmorise/World.git
+mkdir World/build
+cd World\build
 cmake .. -A Win32 -B x86-windows
 cmake --build x86-windows --config Release
 cmake .. -A x64 -B x86_64-windows
@@ -116,15 +128,34 @@ cmake --build x86_64-windows --config Release
 ### Build voice100_native for Windows
 
 ```s
-md voice100_native\build
-cd voice100_native\build
+cd voice100_native
 set WORLD_DIR=path\to\World
-cmake .. -A Win32 -B win-x86 ^
-    -D WORLD_INC=%WORLD_DIR%\src ^
-    -D WORLD_LIB=%WORLD_DIR%\build\x86-windows
-cmake --build win-x86 --config Release
-cmake .. -A x64 -B win-x64 ^
-    -D WORLD_INC=%WORLD_DIR%\src ^
-    -D WORLD_LIB=%WORLD_DIR%\build\x86_64-windows
-cmake --build win-x64 --config Release
+set VOICE100_PLATFORM=x86-windows
+rem set VOICE100_PLATFORM=x86_64-windows
+cmake . ^
+    -A Win32 -B build\%VOICE100_PLATFORM% ^
+    -D WORLD_INC=%WORLD_DIR%\include ^
+    -D WORLD_LIB=%WORLD_DIR%\lib\%VOICE100_PLATFORM%
+cmake --build build\%VOICE100_PLATFORM% --config Release
+```
+
+```
+rem set ANDROID_ABI=armeabi-v7a
+set ANDROID_ABI=arm64-v8a
+rem set ANDROID_ABI=x86
+rem set ANDROID_ABI=x86_64
+set VOICE100_PLATFORM=x86-android
+set VOICE100_PLATFORM=x86_64-android
+set VOICE100_PLATFORM=arm64-v8a-android
+set VOICE100_PLATFORM=armeabi-v7a-android
+cmake . ^
+    -B build\%VOICE100_PLATFORM% ^
+    -DCMAKE_TOOLCHAIN_FILE=%CMAKE_TOOLCHAIN_FILE% ^
+    -G Ninja ^
+    -D WORLD_INC=%WORLD_DIR%\include ^
+    -D WORLD_LIB=%WORLD_DIR%\lib\%VOICE100_PLATFORM% ^
+    -D ANDROID_ABI=%ANDROID_ABI% ^
+    -D ANDROID_NATIVE_API_LEVEL=26 ^
+    -D CMAKE_MAKE_PROGRAM=c:\local\ninja.exe
+cmake --build build\%VOICE100_PLATFORM% --config Release
 ```
