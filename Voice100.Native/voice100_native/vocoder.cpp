@@ -7,7 +7,7 @@
 
 #ifdef WIN32
 #define VOICE100_EXPORT __declspec(dllexport)
-#define VOICE100_API __cdecl
+#define VOICE100_API __stdcall
 #endif
 #ifdef __GNUC__
 #define VOICE100_EXPORT __attribute__((visibility("default")))

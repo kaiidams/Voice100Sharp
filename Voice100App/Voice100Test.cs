@@ -249,7 +249,7 @@ namespace Voice100App
         public async Task TestAsync(string asrModel)
         {
             string appDirPath = AppDomain.CurrentDomain.BaseDirectory;
-            string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "..", "test_data");
+            string inputDirPath = Path.Combine(appDirPath, "..", "..", "..", "test_data");
             string inputPath = Path.Combine(inputDirPath, "transcript.txt");
 
             using (var recognizer = await BuildSpeechRecognizerAsync(asrModel))
