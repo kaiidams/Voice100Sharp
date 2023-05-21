@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.6.0)
-
 project("webrtc_vad")
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -24,3 +22,6 @@ add_library(
     common_audio/signal_processing/resample_fractional.c
     common_audio/signal_processing/spl_inl.c
 )
+
+install(TARGETS webrtc_vad
+        LIBRARY DESTINATION)

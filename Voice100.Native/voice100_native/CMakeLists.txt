@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 3.6.0)
 project(voice100_native)
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -12,7 +11,10 @@ add_library(
     vocoder.cpp)
 
 if(WIN32)    
-    target_link_libraries(voice100_native ${WORLD_LIB}/Release/world.lib)
+    target_link_libraries(voice100_native ${WORLD_LIB}/world.lib)
 else(WIN32)
     target_link_libraries(voice100_native ${WORLD_LIB}/libworld.a)
 endif(WIN32)
+
+install(TARGETS voice100_native
+        LIBRARY DESTINATION)

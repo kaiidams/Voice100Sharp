@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
   <metadata>
     <id>Voice100.Native</id>
-    <version>0.3.0</version>
+    <version>0.4.0</version>
     <authors>Katsuya Iida</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <license type="expression">MIT</license>
@@ -20,16 +20,13 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="lib\monoandroid11.0\_._" target="lib\monoandroid11.0" />
-    <file src="lib\netstandard2.0\_._" target="lib\netstandard2.0" />
-    <file src="..\voice100_native\build\win-x86\Release\voice100_native.dll" target="runtimes\win-x86\native" />
-    <file src="..\voice100_native\build\win-x64\Release\voice100_native.dll" target="runtimes\win-x64\native" />
-    <file src="..\voice100_native\build\linux-x64\libvoice100_native.so" target="runtimes\linux-x64\native" />
-    <file src="..\webrtc_vad\dist\win-x86\webrtc_vad.dll" target="runtimes\win-x86\native" />
-    <file src="..\webrtc_vad\dist\win-x64\webrtc_vad.dll" target="runtimes\win-x64\native" />
-    <file src="..\webrtc_vad\dist\linux-x64\libwebrtc_vad.so" target="runtimes\linux-x64\native" />
-    <file src="voice100_native.aar" target="runtimes\android\native" />
-    <file src="build\android\Voice100.Native.targets" target="build\monoandroid11.0" />
-    <file src="build\netstandard2.0\Voice100.Native.props" target="build\netstandard2.0" />
+    <file src="empty.txt" target="lib\monoandroid11.0\_._" />
+    <file src="empty.txt" target="lib\netstandard2.0\_._" />
+    <file src=".\out\install\win-x86-release\bin\*.dll" target="runtimes\win-x86\native\" />
+    <file src=".\out\install\win-x64-release\bin\*.dll" target="runtimes\win-x64\native\" />
+    <file src=".\out\install\linux-x64\lib\*.so" target="runtimes\linux-x64\native\" />
+    <file src=".\out\install\android-release\voice100_native.aar" target="runtimes\android\native" />
+    <file src="Android.targets" target="build\monoandroid11.0\Voice100.Native.targets" />
+    <file src="Package.props" target="build\netstandard2.0\Voice100.Native.props" />
   </files>
 </package>
